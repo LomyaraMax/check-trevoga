@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Отчет по закрытию отделений</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: #0f172a;
+      color: #f8fafc;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .header {
+      width: 100%;
+      max-width: 500px;
+      position: sticky;
+      top: 0;
+      background-color: #1e293b;
+      padding: 16px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .title {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .counter {
+      background-color: #334155;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #38bdf8;
+    }
+
+    .grid {
+      width: 100%;
+      max-width: 500px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 30px;
+    }
+
+    .card {
+      background-color: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: border-color 0.2s ease;
+    }
+
+    .card.is-closed {
+      border-color: #22c55e;
+    }
+
+    .branch-name {
+      font-weight: 500;
+      font-size: 1rem;
+    }
+
+    .status-btn {
+      background-color: #334155;
+      color: #94a3b8;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      outline: none;
+      transition: all 0.2s ease;
+      min-width: 110px;
+    }
+
+    /* "Светящееся" состояние при нажатии */
+    .status-btn.active {
+      background-color: #22c55e;
+      color: #052e16;
+      box-shadow: 0 0 12px rgba(34, 197, 94, 0.6);
+    }
+
+    .footer {
+      width: 100%;
+      max-width: 500px;
+      text-align: center;
+      margin-top: auto;
+      padding-bottom: 20px;
+    }
+
+    .reset-btn {
+      background-color: transparent;
+      color: #ef4444;
+      border: 1px solid #ef4444;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      transition: background-color 0.2s ease;
+    }
+
+    .reset-btn:active {
+      background-color: rgba(239, 68, 68, 0.1);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="title">Контроль закрытия</div>
+    <div class="counter" id="counter">0 / 20</div>
+  </div>
+
+  <div class="grid" id="branchesGrid"></div>
+
+  <div class="footer">
+    <button class="reset-btn" onclick="resetAll()">Сбросить всё</button>
+  </div>
+
+  <script>
+    const TOTAL_BRANCHES = 20;
+    const STORAGE_KEY = 'branches_status_app';
+
+    // Загрузка или инициализация состояния (массив из 20 boolean элементов)
+    let branchStatus = JSON.parse(localStorage.getItem(STORAGE_KEY)) || new Array(TOTAL_BRANCHES).fill(false);
+
+    const gridEl = document.getElementById('branchesGrid');
+    const counterEl = document.getElementById('counter');
+
+    function renderGrid() {
+      gridEl.innerHTML = '';
+      let closedCount = 0;
+
+      for (let i = 0; i < TOTAL_BRANCHES; i++) {
+        const isClosed = branchStatus[i];
+        if (isClosed) closedCount++;
+
+        const card = document.createElement('div');
+        card.className = `card ${isClosed ? 'is-closed' : ''}`;
+
+        const name = document.createElement('span');
+        name.className = 'branch-name';
+        name.textContent = `Отделение №${i + 1}`;
+
+        const btn = document.createElement('button');
+        btn.className = `status-btn ${isClosed ? 'active' : ''}`;
+        btn.textContent = isClosed ? 'ЗАКРЫТО' : 'Не закрыто';
+        btn.onclick = () => toggleBranch(i);
+
+        card.appendChild(name);
+        card.appendChild(btn);
+        gridEl.appendChild(card);
+      }
+
+      counterEl.textContent = `${closedCount} / ${TOTAL_BRANCHES}`;
+    }
+
+    function toggleBranch(index) {
+      branchStatus[index] = !branchStatus[index];
+      saveAndRender();
+    }
+
+    function saveAndRender() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(branchStatus));
+      renderGrid();
+    }
+
+    function resetAll() {
+      const pass = prompt('Введите пароль для сброса:');
+      if (pass === '00') {
+        branchStatus = new Array(TOTAL_BRANCHES).fill(false);
+        saveAndRender();
+      } else if (pass !== null) {
+        alert('Неверный пароль!');
+      }
+    }
+
+    // Первоначальный рендер при загрузке страницы
+    renderGrid();
+  </script>
+</body>
+</html>
