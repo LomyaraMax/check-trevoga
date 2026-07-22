@@ -186,8 +186,6 @@
       id="searchInput" 
       class="search-input" 
       placeholder="Введите № отделения (напр. 7)..."
-      min="1"
-      max="20"
     >
     <button class="clear-search-btn" id="clearSearchBtn" onclick="clearSearch()">✕</button>
   </div>
@@ -195,11 +193,24 @@
   <div class="grid" id="branchesGrid"></div>
 
   <div class="footer">
-    <button class="reset-btn" onclick="resetAll()">Сбросить всё</button>
+    <button class="reset-btn" onclick="resetAll()">Сбросить всё (пароль 00)</button>
   </div>
 
   <script>
-    // Ваши настройки Firebase
+    // Список ваших отделений
+    const BRANCH_NUMBERS = [
+      51, 37, 57, 7, 124, 148, 88, 127, 119, 68, 
+      163, 76, 95, 98, 96, 122, 50, 53, 17, 110
+    ];
+
+    // Начальные статусы (17 и 110 уже закрыты по вашему списку)
+    const INITIAL_STATUSES = {
+      "51": false, "37": false, "57": false, "7": false, "124": false,
+      "148": false, "88": false, "127": false, "119": false, "68": false,
+      "163": false, "76": false, "95": false, "98": false, "96": false,
+      "122": false, "50": false, "53": false, "17": true, "110": true
+    };
+
     const firebaseConfig = {
       apiKey: "AIzaSyArdBRpk8EyzBJ_Uruk2rYGzlzdS-Eaj50",
       authDomain: "mid-np-470dc.firebaseapp.com",
@@ -211,15 +222,13 @@
       measurementId: "G-YERGDJ4FXT"
     };
 
-    // Инициализируем Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    const branchesRef = db.ref('branches');
+    const branchesRef = db.ref('branches_map');
 
-    const TOTAL_BRANCHES = 20;
     const STORAGE_KEY_FILTER = 'branches_filter_app';
 
-    let branchStatus = new Array(TOTAL_BRANCHES).fill(false);
+    let branchStatus = { ...INITIAL_STATUSES };
     let savedFilter = localStorage.getItem(STORAGE_KEY_FILTER) || '';
 
     const gridEl = document.getElementById('branchesGrid');
@@ -229,16 +238,20 @@
 
     searchInput.value = savedFilter;
 
-    // Подписка на изменения в базе данных в реальном времени
+    // Слушатель событий в Firebase Realtime Database
     branchesRef.on('value', (snapshot) => {
       const data = snapshot.val();
-      if (data) {
-        branchStatus = data;
+      
+      if (!data) {
+        // Если в базе ничего нет — записываем стартовую структуру
+        branchesRef.set(INITIAL_STATUSES);
       } else {
-        branchStatus = new Array(TOTAL_BRANCHES).fill(false);
-        branchesRef.set(branchStatus);
+        branchStatus = data;
+        renderGrid();
       }
-      renderGrid();
+    }, (error) => {
+      console.error("Ошибка чтения Firebase:", error);
+      gridEl.innerHTML = '<div class="no-results">Ошибка подключения к базе данных!</div>';
     });
 
     function renderGrid() {
@@ -249,13 +262,14 @@
       clearSearchBtn.style.display = filterValue ? 'block' : 'none';
       let renderedCardsCount = 0;
 
-      for (let i = 0; i < TOTAL_BRANCHES; i++) {
-        const branchNum = i + 1;
-        const isClosed = branchStatus[i] || false;
+      BRANCH_NUMBERS.forEach((branchNum) => {
+        const numStr = branchNum.toString();
+        const isClosed = !!branchStatus[numStr];
         if (isClosed) closedCount++;
 
-        if (filterValue !== '' && branchNum.toString() !== filterValue) {
-          continue; 
+        // Поиск по точному совпадению номера
+        if (filterValue !== '' && numStr !== filterValue) {
+          return;
         }
 
         renderedCardsCount++;
@@ -265,28 +279,28 @@
 
         const name = document.createElement('span');
         name.className = 'branch-name';
-        name.textContent = `Отделение №${branchNum}`;
+        name.textContent = `Отделение №${numStr}`;
 
         const btn = document.createElement('button');
         btn.className = `status-btn ${isClosed ? 'active' : ''}`;
         btn.textContent = isClosed ? 'ЗАКРЫТО' : 'Не закрыто';
-        btn.onclick = () => toggleBranch(i);
+        btn.onclick = () => toggleBranch(numStr);
 
         card.appendChild(name);
         card.appendChild(btn);
         gridEl.appendChild(card);
-      }
+      });
 
       if (renderedCardsCount === 0) {
         gridEl.innerHTML = '<div class="no-results">Отделение не найдено</div>';
       }
 
-      counterEl.textContent = `${closedCount} / ${TOTAL_BRANCHES}`;
+      counterEl.textContent = `${closedCount} / ${BRANCH_NUMBERS.length}`;
     }
 
-    function toggleBranch(index) {
-      // Обновляем статус отделения в облаке
-      db.ref(`branches/${index}`).set(!branchStatus[index]);
+    function toggleBranch(branchNumStr) {
+      const newStatus = !branchStatus[branchNumStr];
+      db.ref(`branches_map/${branchNumStr}`).set(newStatus);
     }
 
     searchInput.addEventListener('input', (e) => {
@@ -304,8 +318,9 @@
     function resetAll() {
       const pass = prompt('Введите пароль для сброса:');
       if (pass === '00') {
-        const emptyState = new Array(TOTAL_BRANCHES).fill(false);
-        branchesRef.set(emptyState);
+        const resetState = {};
+        BRANCH_NUMBERS.forEach(num => resetState[num] = false);
+        branchesRef.set(resetState);
       } else if (pass !== null) {
         alert('Неверный пароль!');
       }
