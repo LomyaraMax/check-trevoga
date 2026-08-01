@@ -213,6 +213,8 @@
       "122": false, "50": false, "53": false, "17": true, "110": true
     };
 
+    const TIMEOUT_MS = 15 * 60 * 1000; // 15 минут в миллисекундах
+
     const firebaseConfig = {
       apiKey: "AIzaSyArdBRpk8EyzBJ_Uruk2rYGzlzdS-Eaj50",
       authDomain: "mid-np-470dc.firebaseapp.com",
@@ -227,10 +229,12 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const branchesRef = db.ref('branches_map');
+    const lastActivityRef = db.ref('last_activity_timestamp');
 
     const STORAGE_KEY_FILTER = 'branches_filter_app';
 
     let branchStatus = { ...INITIAL_STATUSES };
+    let lastActivityTimestamp = Date.now();
     let savedFilter = localStorage.getItem(STORAGE_KEY_FILTER) || '';
 
     const gridEl = document.getElementById('branchesGrid');
@@ -240,6 +244,15 @@
 
     searchInput.value = savedFilter;
 
+    // Слушатель времени последнего действия
+    lastActivityRef.on('value', (snapshot) => {
+      const val = snapshot.val();
+      if (val) {
+        lastActivityTimestamp = val;
+        checkInactivityAndReset();
+      }
+    });
+
     // Слушатель событий в Firebase Realtime Database
     branchesRef.on('value', (snapshot) => {
       const data = snapshot.val();
@@ -247,14 +260,34 @@
       if (!data) {
         // Если в базе ничего нет — записываем стартовую структуру
         branchesRef.set(INITIAL_STATUSES);
+        lastActivityRef.set(Date.now());
       } else {
         branchStatus = data;
+        checkInactivityAndReset();
         renderGrid();
       }
     }, (error) => {
       console.error("Ошибка чтения Firebase:", error);
       gridEl.innerHTML = '<div class="no-results">Ошибка подключения к базе данных!</div>';
     });
+
+    // Проверка 15 минут бездействия и автоматический сброс
+    function checkInactivityAndReset() {
+      const now = Date.now();
+      if (now - lastActivityTimestamp >= TIMEOUT_MS) {
+        // Проверяем, есть ли хотя бы одно закрытое отделение, чтобы не слать лишние запросы
+        const hasClosed = Object.values(branchStatus).some(val => val === true);
+        if (hasClosed) {
+          const resetState = {};
+          BRANCH_NUMBERS.forEach(num => resetState[num] = false);
+          branchesRef.set(resetState);
+          lastActivityRef.set(now);
+        }
+      }
+    }
+
+    // Периодическая проверка таймаута каждую минуту
+    setInterval(checkInactivityAndReset, 60000);
 
     function renderGrid() {
       gridEl.innerHTML = '';
@@ -302,7 +335,9 @@
 
     function toggleBranch(branchNumStr) {
       const newStatus = !branchStatus[branchNumStr];
+      const now = Date.now();
       db.ref(`branches_map/${branchNumStr}`).set(newStatus);
+      lastActivityRef.set(now); // Обновляем время последнего действия
     }
 
     searchInput.addEventListener('input', (e) => {
@@ -323,6 +358,7 @@
         const resetState = {};
         BRANCH_NUMBERS.forEach(num => resetState[num] = false);
         branchesRef.set(resetState);
+        lastActivityRef.set(Date.now());
       } else if (pass !== null) {
         alert('Неверный пароль!');
       }
