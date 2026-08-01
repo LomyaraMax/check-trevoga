@@ -153,6 +153,8 @@
       padding-bottom: 20px;
       position: sticky;
       bottom: 0;
+      background-color: #0f172a;
+      padding-top: 10px;
     }
 
     .reset-btn {
@@ -195,7 +197,7 @@
   <div class="grid" id="branchesGrid"></div>
 
   <div class="footer">
-    <button class="reset-btn" onclick="resetAll()">Сбросить всё (пароль 00)</button>
+    <button class="reset-btn" id="resetBtn" onclick="resetAll()">Сбросить всё (00) [15:00]</button>
   </div>
 
   <script>
@@ -241,6 +243,7 @@
     const counterEl = document.getElementById('counter');
     const searchInput = document.getElementById('searchInput');
     const clearSearchBtn = document.getElementById('clearSearchBtn');
+    const resetBtn = document.getElementById('resetBtn');
 
     searchInput.value = savedFilter;
 
@@ -249,7 +252,7 @@
       const val = snapshot.val();
       if (val) {
         lastActivityTimestamp = val;
-        checkInactivityAndReset();
+        updateTimerAndCheck();
       }
     });
 
@@ -258,12 +261,11 @@
       const data = snapshot.val();
       
       if (!data) {
-        // Если в базе ничего нет — записываем стартовую структуру
         branchesRef.set(INITIAL_STATUSES);
         lastActivityRef.set(Date.now());
       } else {
         branchStatus = data;
-        checkInactivityAndReset();
+        updateTimerAndCheck();
         renderGrid();
       }
     }, (error) => {
@@ -271,11 +273,13 @@
       gridEl.innerHTML = '<div class="no-results">Ошибка подключения к базе данных!</div>';
     });
 
-    // Проверка 15 минут бездействия и автоматический сброс
-    function checkInactivityAndReset() {
+    function updateTimerAndCheck() {
       const now = Date.now();
-      if (now - lastActivityTimestamp >= TIMEOUT_MS) {
-        // Проверяем, есть ли хотя бы одно закрытое отделение, чтобы не слать лишние запросы
+      const elapsed = now - lastActivityTimestamp;
+      const remaining = TIMEOUT_MS - elapsed;
+
+      if (remaining <= 0) {
+        resetBtn.textContent = "Сбросить всё (00) [00:00]";
         const hasClosed = Object.values(branchStatus).some(val => val === true);
         if (hasClosed) {
           const resetState = {};
@@ -283,11 +287,17 @@
           branchesRef.set(resetState);
           lastActivityRef.set(now);
         }
+      } else {
+        const totalSeconds = Math.floor(remaining / 1000);
+        const mins = Math.floor(totalSeconds / 60);
+        const secs = totalSeconds % 60;
+        const timeStr = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        resetBtn.textContent = `Сбросить всё (00) [${timeStr}]`;
       }
     }
 
-    // Периодическая проверка таймаута каждую минуту
-    setInterval(checkInactivityAndReset, 60000);
+    // Обновляем таймер каждую секунду
+    setInterval(updateTimerAndCheck, 1000);
 
     function renderGrid() {
       gridEl.innerHTML = '';
@@ -302,7 +312,6 @@
         const isClosed = !!branchStatus[numStr];
         if (isClosed) closedCount++;
 
-        // Поиск по точному совпадению номера
         if (filterValue !== '' && numStr !== filterValue) {
           return;
         }
@@ -337,7 +346,7 @@
       const newStatus = !branchStatus[branchNumStr];
       const now = Date.now();
       db.ref(`branches_map/${branchNumStr}`).set(newStatus);
-      lastActivityRef.set(now); // Обновляем время последнего действия
+      lastActivityRef.set(now);
     }
 
     searchInput.addEventListener('input', (e) => {
