@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
+  <!-- Запрет кэширования для браузеров -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
@@ -46,6 +47,45 @@
     .title {
       font-size: 1.1rem;
       font-weight: 600;
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .chat-trigger-btn {
+      background-color: #334155;
+      border: none;
+      color: #f8fafc;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      transition: background-color 0.2s;
+    }
+
+    .chat-trigger-btn:hover {
+      background-color: #475569;
+    }
+
+    .chat-badge {
+      position: absolute;
+      top: -3px;
+      right: -3px;
+      background-color: #ef4444;
+      color: #fff;
+      font-size: 0.7rem;
+      font-weight: 700;
+      border-radius: 10px;
+      padding: 2px 6px;
+      display: none;
+      border: 2px solid #1e293b;
     }
 
     .counter {
@@ -176,6 +216,161 @@
     .reset-btn:active {
       background-color: rgba(239, 68, 68, 0.1);
     }
+
+    /* Модальное окно чата */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(4px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      padding: 16px;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .chat-modal {
+      background-color: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 480px;
+      height: 80vh;
+      max-height: 600px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+    }
+
+    .chat-header {
+      padding: 14px 16px;
+      background-color: #0f172a;
+      border-bottom: 1px solid #334155;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .chat-header-title {
+      font-weight: 600;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .chat-close-btn {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 1.4rem;
+      cursor: pointer;
+      padding: 4px;
+      line-height: 1;
+    }
+
+    .chat-close-btn:hover {
+      color: #f8fafc;
+    }
+
+    .chat-messages {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .chat-message {
+      background-color: #0f172a;
+      border: 1px solid #334155;
+      padding: 8px 12px;
+      border-radius: 10px;
+      max-width: 85%;
+      word-wrap: break-word;
+      align-self: flex-start;
+    }
+
+    .chat-message.my-message {
+      align-self: flex-end;
+      background-color: #1e3a8a;
+      border-color: #3b82f6;
+    }
+
+    .message-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 0.75rem;
+      margin-bottom: 4px;
+    }
+
+    .message-sender {
+      font-weight: 700;
+    }
+
+    .message-time {
+      color: #64748b;
+    }
+
+    .message-text {
+      font-size: 0.95rem;
+      line-height: 1.35;
+      color: #f1f5f9;
+    }
+
+    .chat-input-area {
+      padding: 12px;
+      background-color: #0f172a;
+      border-top: 1px solid #334155;
+      display: flex;
+      gap: 8px;
+    }
+
+    .chat-input {
+      flex: 1;
+      background-color: #1e293b;
+      border: 1px solid #334155;
+      color: #f8fafc;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      outline: none;
+    }
+
+    .chat-input:focus {
+      border-color: #38bdf8;
+    }
+
+    .chat-send-btn {
+      background-color: #38bdf8;
+      color: #0f172a;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .chat-send-btn:hover {
+      background-color: #0284c7;
+      color: #fff;
+    }
   </style>
 
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -185,7 +380,15 @@
 
   <div class="header">
     <div class="title">Контроль закрытия</div>
-    <div class="counter" id="counter">0 / 20</div>
+    <div class="header-controls">
+      <button class="chat-trigger-btn" id="openChatBtn" onclick="openChat()" title="Открыть анонимный чат">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <span class="chat-badge" id="chatBadge">0</span>
+      </button>
+      <div class="counter" id="counter">0 / 20</div>
+    </div>
   </div>
 
   <div class="search-container">
@@ -202,6 +405,23 @@
 
   <div class="footer">
     <button class="reset-btn" id="resetBtn" onclick="resetAll()">Сбросить всё пароль (00) [00:30]</button>
+  </div>
+
+  <!-- Модальное окно чата -->
+  <div class="modal-overlay" id="chatModalOverlay" onclick="handleOverlayClick(event)">
+    <div class="chat-modal">
+      <div class="chat-header">
+        <div class="chat-header-title">
+          <span>💬 Анонимный чат</span>
+        </div>
+        <button class="chat-close-btn" onclick="closeChat()">✕</button>
+      </div>
+      <div class="chat-messages" id="chatMessages"></div>
+      <form class="chat-input-area" onsubmit="sendMessage(event)">
+        <input type="text" id="chatInput" class="chat-input" placeholder="Напишите сообщение..." maxlength="300" autocomplete="off">
+        <button type="submit" class="chat-send-btn">Отправить</button>
+      </form>
+    </div>
   </div>
 
   <script>
@@ -235,6 +455,7 @@
     
     const branchesRef = db.ref('branches_map_v3');
     const lastActivityRef = db.ref('last_activity_v3');
+    const chatRef = db.ref('chat_messages_v1');
 
     let serverTimeOffset = 0;
     db.ref('.info/serverTimeOffset').on('value', (snap) => {
@@ -242,23 +463,49 @@
     });
 
     const STORAGE_KEY_FILTER = 'branches_filter_app';
+    const STORAGE_KEY_USER_ID = 'chat_user_id';
+    const STORAGE_KEY_USER_COLOR = 'chat_user_color';
+
+    // Генерация случайного постоянного анонимного ID и цвета пользователя
+    let myUserId = localStorage.getItem(STORAGE_KEY_USER_ID);
+    if (!myUserId) {
+      myUserId = 'Аноним #' + Math.floor(100 + Math.random() * 900);
+      localStorage.setItem(STORAGE_KEY_USER_ID, myUserId);
+    }
+
+    let myUserColor = localStorage.getItem(STORAGE_KEY_USER_COLOR);
+    if (!myUserColor) {
+      const colors = ['#38bdf8', '#4ade80', '#f43f5e', '#fbbf24', '#c084fc', '#f97316'];
+      myUserColor = colors[Math.floor(Math.random() * colors.length)];
+      localStorage.setItem(STORAGE_KEY_USER_COLOR, myUserColor);
+    }
 
     let branchStatus = { ...INITIAL_STATUSES };
     let lastActivityTimestamp = null;
     let savedFilter = localStorage.getItem(STORAGE_KEY_FILTER) || '';
     let wasExpiredState = false;
 
-    // Переменные для обработки звука
+    // Звук
     let audioCtx = null;
     let hasPlayedSoundThisCycle = false;
+
+    // Чат
+    let isChatOpen = false;
+    let unreadCount = 0;
+    let isInitialChatLoad = true;
 
     const gridEl = document.getElementById('branchesGrid');
     const counterEl = document.getElementById('counter');
     const searchInput = document.getElementById('searchInput');
     const clearSearchBtn = document.getElementById('clearSearchBtn');
     const resetBtn = document.getElementById('resetBtn');
+    
+    const chatModalOverlay = document.getElementById('chatModalOverlay');
+    const chatMessagesEl = document.getElementById('chatMessages');
+    const chatInputEl = document.getElementById('chatInput');
+    const chatBadgeEl = document.getElementById('chatBadge');
 
-    // Активация аудио контекста по клику в любом месте
+    // Разблокировка AudioContext
     document.addEventListener('click', () => {
       if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -267,6 +514,13 @@
         audioCtx.resume();
       }
     }, { once: false });
+
+    // Закрытие модального окна по нажатию Esc
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && isChatOpen) {
+        closeChat();
+      }
+    });
 
     function playSuccessSound() {
       try {
@@ -329,6 +583,116 @@
       console.error("Ошибка чтения Firebase:", error);
       gridEl.innerHTML = '<div class="no-results">Ошибка подключения к базе данных!</div>';
     });
+
+    // Слушатель сообщений чата (ограничиваем последние 50)
+    chatRef.limitToLast(50).on('value', (snapshot) => {
+      const data = snapshot.val();
+      chatMessagesEl.innerHTML = '';
+
+      if (data) {
+        const messages = Object.values(data);
+        messages.forEach(msg => {
+          renderChatMessage(msg);
+        });
+
+        if (isInitialChatLoad) {
+          isInitialChatLoad = false;
+        } else if (!isChatOpen) {
+          unreadCount++;
+          updateBadge();
+        }
+
+        if (isChatOpen) {
+          scrollChatToBottom();
+        }
+      } else {
+        chatMessagesEl.innerHTML = '<div class="no-results">Сообщений пока нет...</div>';
+      }
+    });
+
+    function renderChatMessage(msg) {
+      const isMine = msg.senderId === myUserId;
+      const msgDiv = document.createElement('div');
+      msgDiv.className = `chat-message ${isMine ? 'my-message' : ''}`;
+
+      const metaDiv = document.createElement('div');
+      metaDiv.className = 'message-meta';
+
+      const senderSpan = document.createElement('span');
+      senderSpan.className = 'message-sender';
+      senderSpan.textContent = isMine ? 'Вы' : msg.senderId;
+      senderSpan.style.color = isMine ? '#93c5fd' : (msg.color || '#38bdf8');
+
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'message-time';
+      
+      const date = new Date(msg.timestamp);
+      const hours = String(date.getHours()).padStart(2, '0');
+      const mins = String(date.getMinutes()).padStart(2, '0');
+      timeSpan.textContent = `${hours}:${mins}`;
+
+      metaDiv.appendChild(senderSpan);
+      metaDiv.appendChild(timeSpan);
+
+      const textDiv = document.createElement('div');
+      textDiv.className = 'message-text';
+      textDiv.textContent = msg.text;
+
+      msgDiv.appendChild(metaDiv);
+      msgDiv.appendChild(textDiv);
+      chatMessagesEl.appendChild(msgDiv);
+    }
+
+    function sendMessage(e) {
+      e.preventDefault();
+      const text = chatInputEl.value.trim();
+      if (!text) return;
+
+      const newMsg = {
+        text: text,
+        senderId: myUserId,
+        color: myUserColor,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+      };
+
+      chatRef.push(newMsg);
+      chatInputEl.value = '';
+    }
+
+    function openChat() {
+      isChatOpen = true;
+      chatModalOverlay.classList.add('active');
+      unreadCount = 0;
+      updateBadge();
+      scrollChatToBottom();
+      setTimeout(() => chatInputEl.focus(), 100);
+    }
+
+    function closeChat() {
+      isChatOpen = false;
+      chatModalOverlay.classList.remove('active');
+    }
+
+    function handleOverlayClick(e) {
+      if (e.target === chatModalOverlay) {
+        closeChat();
+      }
+    }
+
+    function updateBadge() {
+      if (unreadCount > 0) {
+        chatBadgeEl.textContent = unreadCount > 99 ? '99+' : unreadCount;
+        chatBadgeEl.style.display = 'block';
+      } else {
+        chatBadgeEl.style.display = 'none';
+      }
+    }
+
+    function scrollChatToBottom() {
+      setTimeout(() => {
+        chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+      }, 50);
+    }
 
     function updateTimerAndState() {
       if (!lastActivityTimestamp) return;
