@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
+  <!-- Запрет кэширования для браузеров -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
@@ -205,8 +206,6 @@
   </div>
 
   <script>
-    const APP_VERSION = "1.0.2";
-
     const BRANCH_NUMBERS = [
       51, 37, 57, 7, 124, 148, 88, 127, 119, 68, 
       163, 76, 95, 98, 96, 122, 50, 53, 17, 110
@@ -235,23 +234,12 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     
-    // Переходим на чистые ветки, чтобы старый код у кого-либо в кэше не имел доступа
     const branchesRef = db.ref('branches_map_v3');
     const lastActivityRef = db.ref('last_activity_v3');
-    const versionRef = db.ref('app_version');
 
     let serverTimeOffset = 0;
     db.ref('.info/serverTimeOffset').on('value', (snap) => {
       serverTimeOffset = snap.val() || 0;
-    });
-
-    versionRef.on('value', (snapshot) => {
-      const serverVersion = snapshot.val();
-      if (!serverVersion) {
-        versionRef.set(APP_VERSION);
-      } else if (serverVersion !== APP_VERSION) {
-        window.location.reload(true);
-      }
     });
 
     const STORAGE_KEY_FILTER = 'branches_filter_app';
@@ -291,7 +279,6 @@
       gridEl.innerHTML = '<div class="no-results">Ошибка подключения к базе данных!</div>';
     });
 
-    // Эта функция ТУПО ИЗМЕНЯЕТ ТЕКСТ КНОПКИ и НЕ вызывает запись в БД!
     function updateTimerUI() {
       if (!lastActivityTimestamp) return;
 
@@ -320,14 +307,12 @@
       clearSearchBtn.style.display = filterValue ? 'block' : 'none';
       let renderedCardsCount = 0;
 
-      // Проверяем, истекли ли 12 минут ИСКЛЮЧИТЕЛЬНО для отображения
       const currentServerTime = Date.now() + serverTimeOffset;
       const isExpired = lastActivityTimestamp && ((currentServerTime - lastActivityTimestamp) >= TIMEOUT_MS);
 
       BRANCH_NUMBERS.forEach((branchNum) => {
         const numStr = branchNum.toString();
         
-        // Если 12 минут прошло — визуально показываем как незакрытое
         const rawStatus = !!branchStatus[numStr];
         const isClosed = isExpired ? false : rawStatus;
         
@@ -368,20 +353,16 @@
       const isExpired = lastActivityTimestamp && ((currentServerTime - lastActivityTimestamp) >= TIMEOUT_MS);
 
       if (isExpired) {
-        // Если прошло > 12 минут, то ПЕРВЫЙ кликнувший сбрасывает все старые отметки
-        // и ставит ЗАКРЫТО только на свое отделение
         const newMap = {};
         BRANCH_NUMBERS.forEach(num => newMap[num.toString()] = false);
         newMap[branchNumStr] = true;
 
         branchesRef.set(newMap);
       } else {
-        // Если 12 минут НЕ прошло — просто переключаем статус конкретного отделения
         const newStatus = !branchStatus[branchNumStr];
         db.ref(`branches_map_v3/${branchNumStr}`).set(newStatus);
       }
 
-      // Обновляем таймер активности
       lastActivityRef.set(firebase.database.ServerValue.TIMESTAMP);
     }
 
