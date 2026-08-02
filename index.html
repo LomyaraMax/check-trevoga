@@ -95,6 +95,16 @@
       font-weight: 700;
       font-size: 0.95rem;
       color: #38bdf8;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s ease;
+      border: 1px solid transparent;
+    }
+
+    .counter:hover {
+      background-color: #0284c7;
+      color: #ffffff;
+      border-color: #38bdf8;
     }
 
     .search-container {
@@ -217,7 +227,7 @@
       background-color: rgba(239, 68, 68, 0.1);
     }
 
-    /* Модальное окно чата */
+    /* Общие стили модальных окон */
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -241,21 +251,19 @@
       pointer-events: auto;
     }
 
-    .chat-modal {
+    .modal-card {
       background-color: #1e293b;
       border: 1px solid #334155;
       border-radius: 16px;
       width: 100%;
       max-width: 480px;
-      height: 80vh;
-      max-height: 600px;
       display: flex;
       flex-direction: column;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
       overflow: hidden;
     }
 
-    .chat-header {
+    .modal-header {
       padding: 14px 16px;
       background-color: #0f172a;
       border-bottom: 1px solid #334155;
@@ -264,7 +272,7 @@
       align-items: center;
     }
 
-    .chat-header-title {
+    .modal-header-title {
       font-weight: 600;
       font-size: 1rem;
       display: flex;
@@ -272,7 +280,7 @@
       gap: 8px;
     }
 
-    .chat-close-btn {
+    .modal-close-btn {
       background: none;
       border: none;
       color: #94a3b8;
@@ -282,8 +290,55 @@
       line-height: 1;
     }
 
-    .chat-close-btn:hover {
+    .modal-close-btn:hover {
       color: #f8fafc;
+    }
+
+    /* Модалка непроголосовавших отделений */
+    .pending-body {
+      padding: 20px;
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+
+    .pending-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(75px, 1fr));
+      gap: 10px;
+    }
+
+    .pending-badge {
+      background-color: #0f172a;
+      border: 1px solid #334155;
+      color: #38bdf8;
+      font-weight: 700;
+      font-size: 1.05rem;
+      padding: 12px 8px;
+      border-radius: 10px;
+      text-align: center;
+      transition: all 0.3s ease;
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* Анимация исчезновения плашки при отметке */
+    .pending-badge.fade-out {
+      opacity: 0;
+      transform: scale(0.7);
+    }
+
+    .pending-empty {
+      text-align: center;
+      color: #22c55e;
+      font-weight: 600;
+      padding: 30px 10px;
+      font-size: 1.1rem;
+    }
+
+    /* Чат модалка */
+    .chat-modal {
+      height: 80vh;
+      max-height: 600px;
     }
 
     .chat-messages {
@@ -387,7 +442,7 @@
         </svg>
         <span class="chat-badge" id="chatBadge">0</span>
       </button>
-      <div class="counter" id="counter">0 / 20</div>
+      <div class="counter" id="counter" onclick="openPendingModal()" title="Нажмите, чтобы увидеть незакрытые">0 / 20</div>
     </div>
   </div>
 
@@ -408,19 +463,34 @@
   </div>
 
   <!-- Модальное окно чата -->
-  <div class="modal-overlay" id="chatModalOverlay" onclick="handleOverlayClick(event)">
-    <div class="chat-modal">
-      <div class="chat-header">
-        <div class="chat-header-title">
+  <div class="modal-overlay" id="chatModalOverlay" onclick="handleOverlayClick(event, 'chat')">
+    <div class="modal-card chat-modal">
+      <div class="modal-header">
+        <div class="modal-header-title">
           <span>💬 Анонимный чат</span>
         </div>
-        <button class="chat-close-btn" onclick="closeChat()">✕</button>
+        <button class="modal-close-btn" onclick="closeChat()">✕</button>
       </div>
       <div class="chat-messages" id="chatMessages"></div>
       <form class="chat-input-area" onsubmit="sendMessage(event)">
         <input type="text" id="chatInput" class="chat-input" placeholder="Напишите сообщение..." maxlength="300" autocomplete="off">
         <button type="submit" class="chat-send-btn">Отправить</button>
       </form>
+    </div>
+  </div>
+
+  <!-- Модальное окно непроголосовавших отделений -->
+  <div class="modal-overlay" id="pendingModalOverlay" onclick="handleOverlayClick(event, 'pending')">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-header-title">
+          <span>⏳ Осталось закрыть</span>
+        </div>
+        <button class="modal-close-btn" onclick="closePendingModal()">✕</button>
+      </div>
+      <div class="pending-body">
+        <div class="pending-grid" id="pendingGrid"></div>
+      </div>
     </div>
   </div>
 
@@ -466,7 +536,7 @@
     const STORAGE_KEY_USER_ID = 'chat_user_id';
     const STORAGE_KEY_USER_COLOR = 'chat_user_color';
 
-    // Генерация случайного постоянного анонимного ID и цвета пользователя
+    // Анонимные параметры пользователя
     let myUserId = localStorage.getItem(STORAGE_KEY_USER_ID);
     if (!myUserId) {
       myUserId = 'Аноним #' + Math.floor(100 + Math.random() * 900);
@@ -494,6 +564,9 @@
     let unreadCount = 0;
     let isInitialChatLoad = true;
 
+    // Модалка списка
+    let isPendingModalOpen = false;
+
     const gridEl = document.getElementById('branchesGrid');
     const counterEl = document.getElementById('counter');
     const searchInput = document.getElementById('searchInput');
@@ -505,7 +578,10 @@
     const chatInputEl = document.getElementById('chatInput');
     const chatBadgeEl = document.getElementById('chatBadge');
 
-    // Разблокировка AudioContext
+    const pendingModalOverlay = document.getElementById('pendingModalOverlay');
+    const pendingGridEl = document.getElementById('pendingGrid');
+
+    // Активация аудио
     document.addEventListener('click', () => {
       if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -515,10 +591,11 @@
       }
     }, { once: false });
 
-    // Закрытие модального окна по нажатию Esc
+    // Закрытие активных модалок по Esc
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && isChatOpen) {
-        closeChat();
+      if (e.key === 'Escape') {
+        if (isChatOpen) closeChat();
+        if (isPendingModalOpen) closePendingModal();
       }
     });
 
@@ -577,6 +654,7 @@
       } else {
         branchStatus = data;
         renderGrid();
+        renderPendingGrid();
         updateTimerAndState();
       }
     }, (error) => {
@@ -584,7 +662,7 @@
       gridEl.innerHTML = '<div class="no-results">Ошибка подключения к базе данных!</div>';
     });
 
-    // Слушатель сообщений чата (ограничиваем последние 50)
+    // Слушатель чата
     chatRef.limitToLast(50).on('value', (snapshot) => {
       const data = snapshot.val();
       chatMessagesEl.innerHTML = '';
@@ -673,10 +751,20 @@
       chatModalOverlay.classList.remove('active');
     }
 
-    function handleOverlayClick(e) {
-      if (e.target === chatModalOverlay) {
-        closeChat();
-      }
+    function openPendingModal() {
+      isPendingModalOpen = true;
+      renderPendingGrid(true); // Заново перерисовываем
+      pendingModalOverlay.classList.add('active');
+    }
+
+    function closePendingModal() {
+      isPendingModalOpen = false;
+      pendingModalOverlay.classList.remove('active');
+    }
+
+    function handleOverlayClick(e, type) {
+      if (type === 'chat' && e.target === chatModalOverlay) closeChat();
+      if (type === 'pending' && e.target === pendingModalOverlay) closePendingModal();
     }
 
     function updateBadge() {
@@ -707,11 +795,13 @@
         if (!wasExpiredState) {
           wasExpiredState = true;
           renderGrid();
+          renderPendingGrid();
         }
       } else {
         if (wasExpiredState) {
           wasExpiredState = false;
           renderGrid();
+          renderPendingGrid();
         }
         
         const totalSeconds = Math.floor(remaining / 1000);
@@ -770,7 +860,7 @@
         gridEl.innerHTML = '<div class="no-results">Отделение не найдено</div>';
       }
 
-      // Проверка на 20/20 и проигрывание звука
+      // Проверка на 20/20 и звук
       if (closedCount === BRANCH_NUMBERS.length && !isExpired) {
         if (!hasPlayedSoundThisCycle) {
           playSuccessSound();
@@ -781,6 +871,61 @@
       }
 
       counterEl.textContent = `${closedCount} / ${BRANCH_NUMBERS.length}`;
+    }
+
+    // Отрисовка списка еще НЕ проголосовавших отделений с плавной анимацией
+    function renderPendingGrid(forceFullRebuild = false) {
+      const currentServerTime = Date.now() + serverTimeOffset;
+      const isExpired = lastActivityTimestamp && ((currentServerTime - lastActivityTimestamp) >= TIMEOUT_MS);
+
+      // Формируем список тех, кто еще не закрыт
+      const pendingNumbers = BRANCH_NUMBERS.filter(num => {
+        const isClosed = isExpired ? false : !!branchStatus[num.toString()];
+        return !isClosed;
+      });
+
+      if (pendingNumbers.length === 0) {
+        pendingGridEl.innerHTML = '<div class="pending-empty">🎉 Все отделения успешно закрыты!</div>';
+        return;
+      }
+
+      if (forceFullRebuild || pendingGridEl.querySelector('.pending-empty')) {
+        pendingGridEl.innerHTML = '';
+        pendingNumbers.forEach(num => {
+          const badge = document.createElement('div');
+          badge.className = 'pending-badge';
+          badge.dataset.num = num;
+          badge.textContent = `№${num}`;
+          pendingGridEl.appendChild(badge);
+        });
+      } else {
+        // Умное обновление с анимацией исчезновения
+        const existingBadges = pendingGridEl.querySelectorAll('.pending-badge');
+        existingBadges.forEach(badge => {
+          const num = parseInt(badge.dataset.num, 10);
+          if (!pendingNumbers.includes(num) && !badge.classList.contains('fade-out')) {
+            badge.classList.add('fade-out');
+            setTimeout(() => {
+              badge.remove();
+              if (pendingGridEl.children.length === 0) {
+                pendingGridEl.innerHTML = '<div class="pending-empty">🎉 Все отделения успешно закрыты!</div>';
+              }
+            }, 300);
+          }
+        });
+
+        // Добавляем новые (если статус изменился обратно)
+        pendingNumbers.forEach(num => {
+          let badge = pendingGridEl.querySelector(`[data-num="${num}"]`);
+          if (!badge) {
+            badge = document.createElement('div');
+            badge.className = 'pending-badge';
+            badge.dataset.num = num;
+            badge.textContent = `№${num}`;
+            pendingGridEl.appendChild(badge);
+          }
+        });
+      }
     }
 
     function toggleBranch(branchNumStr) {
