@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <!-- Запрет кэширования для браузеров -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
@@ -218,7 +217,6 @@
       "122": false, "50": false, "53": false, "17": false, "110": false
     };
 
-    // Таймер для тестов (30 секунд). Переставьте на (12 * 60 * 1000) для 12 минут.
     const TIMEOUT_MS = 6 * 60 * 1000; 
 
     const firebaseConfig = {
@@ -250,11 +248,62 @@
     let savedFilter = localStorage.getItem(STORAGE_KEY_FILTER) || '';
     let wasExpiredState = false;
 
+    // Переменные для обработки звука
+    let audioCtx = null;
+    let hasPlayedSoundThisCycle = false;
+
     const gridEl = document.getElementById('branchesGrid');
     const counterEl = document.getElementById('counter');
     const searchInput = document.getElementById('searchInput');
     const clearSearchBtn = document.getElementById('clearSearchBtn');
     const resetBtn = document.getElementById('resetBtn');
+
+    // Активация аудио контекста по клику в любом месте
+    document.addEventListener('click', () => {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }, { once: false });
+
+    function playSuccessSound() {
+      try {
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+
+        const now = audioCtx.currentTime;
+
+        const osc1 = audioCtx.createOscillator();
+        const gain1 = audioCtx.createGain();
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(659.25, now);
+        gain1.gain.setValueAtTime(0.3, now);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+        osc1.connect(gain1);
+        gain1.connect(audioCtx.destination);
+        osc1.start(now);
+        osc1.stop(now + 0.3);
+
+        const osc2 = audioCtx.createOscillator();
+        const gain2 = audioCtx.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(880.00, now + 0.15);
+        gain2.gain.setValueAtTime(0.4, now + 0.15);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+        osc2.connect(gain2);
+        gain2.connect(audioCtx.destination);
+        osc2.start(now + 0.15);
+        osc2.stop(now + 0.6);
+      } catch (e) {
+        console.log("Ошибка звука:", e);
+      }
+    }
 
     searchInput.value = savedFilter;
 
@@ -291,7 +340,6 @@
       if (remaining <= 0) {
         resetBtn.textContent = "Сбросить всё пароль (00) [00:00]";
         
-        // Как только время истекает — мгновенно перерисовываем карточки как серые
         if (!wasExpiredState) {
           wasExpiredState = true;
           renderGrid();
@@ -326,7 +374,6 @@
       BRANCH_NUMBERS.forEach((branchNum) => {
         const numStr = branchNum.toString();
         
-        // Если период истек — все отделения отрисовываются как незакрытые
         const rawStatus = !!branchStatus[numStr];
         const isClosed = isExpired ? false : rawStatus;
         
@@ -359,6 +406,16 @@
         gridEl.innerHTML = '<div class="no-results">Отделение не найдено</div>';
       }
 
+      // Проверка на 20/20 и проигрывание звука
+      if (closedCount === BRANCH_NUMBERS.length && !isExpired) {
+        if (!hasPlayedSoundThisCycle) {
+          playSuccessSound();
+          hasPlayedSoundThisCycle = true;
+        }
+      } else {
+        hasPlayedSoundThisCycle = false;
+      }
+
       counterEl.textContent = `${closedCount} / ${BRANCH_NUMBERS.length}`;
     }
 
@@ -367,19 +424,16 @@
       const isExpired = lastActivityTimestamp && ((currentServerTime - lastActivityTimestamp) >= TIMEOUT_MS);
 
       if (isExpired) {
-        // При клике во время просроченного таймера очищаем всю мапу и ставим только текущий выбор
         const newMap = {};
         BRANCH_NUMBERS.forEach(num => newMap[num.toString()] = false);
         newMap[branchNumStr] = true;
 
         branchesRef.set(newMap);
       } else {
-        // Если таймер ещё не истек — обычный переключатель (true/false)
         const newStatus = !branchStatus[branchNumStr];
         db.ref(`branches_map_v3/${branchNumStr}`).set(newStatus);
       }
 
-      // Обновляем глобальный timestamp активности
       lastActivityRef.set(firebase.database.ServerValue.TIMESTAMP);
     }
 
