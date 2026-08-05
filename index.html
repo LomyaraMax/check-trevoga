@@ -532,6 +532,7 @@
       font-size: 0.95rem;
       outline: none;
       transition: all 0.2s ease;
+      width: 80%;
     }
 
     .chat-input:focus {
@@ -588,9 +589,10 @@
     }
 
     .sticker-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 8px;
+    display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 8;
     }
 
     .sticker-item {
