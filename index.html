@@ -1,3 +1,4 @@
+Держи полный обновленный HTML-код со всем стильным стеклянным дизайном (Glassmorphism), анимациями всплывающих сообщений, кастомным скроллбаром и 40 Telegram-стикерами!
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -377,88 +378,202 @@
       font-size: 1.1rem;
     }
 
-    /* Чат */
+    /* ==========================================
+       СТИЛЬНЫЙ И СОВРЕМЕННЫЙ АНОНИМНЫЙ ЧАТ (UI V2)
+       ========================================== */
     .chat-modal {
-      height: 80vh;
-      max-height: 600px;
+      height: 85vh;
+      max-height: 650px;
+      background: rgba(15, 23, 42, 0.95) !important;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(99, 102, 241, 0.15) !important;
+    }
+
+    .chat-modal .modal-header {
+      background: rgba(30, 41, 59, 0.6);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 14px 18px;
+    }
+
+    .chat-modal .modal-header-title {
+      font-size: 1.05rem;
+      letter-spacing: 0.3px;
+    }
+
+    /* Кастомный красивый скроллбар */
+    .chat-messages::-webkit-scrollbar,
+    .sticker-picker::-webkit-scrollbar {
+      width: 5px;
+    }
+    .chat-messages::-webkit-scrollbar-track,
+    .sticker-picker::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .chat-messages::-webkit-scrollbar-thumb,
+    .sticker-picker::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+    }
+    .chat-messages::-webkit-scrollbar-thumb:hover,
+    .sticker-picker::-webkit-scrollbar-thumb:hover {
+      background: rgba(56, 189, 248, 0.4);
     }
 
     .chat-messages {
       flex: 1;
-      padding: 16px;
+      padding: 18px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
+      background: radial-gradient(circle at center, rgba(30, 41, 59, 0.3) 0%, rgba(15, 23, 42, 0.8) 100%);
       overscroll-behavior: contain;
     }
 
+    /* Бабблы сообщений */
     .chat-message {
-      background-color: #0f172a;
-      border: 1px solid #334155;
-      padding: 8px 12px;
-      border-radius: 10px;
-      max-width: 85%;
+      position: relative;
+      background: #1e293b;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 10px 14px;
+      border-radius: 16px 16px 16px 4px;
+      max-width: 80%;
       word-wrap: break-word;
       align-self: flex-start;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      animation: msgPop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
     .chat-message.my-message {
       align-self: flex-end;
-      background-color: #1e3a8a;
-      border-color: #3b82f6;
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      border-color: rgba(255, 255, 255, 0.15);
+      border-radius: 16px 16px 4px 16px;
+      box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+    }
+
+    @keyframes msgPop {
+      from { opacity: 0; transform: translateY(8px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
     .message-meta {
       display: flex;
       justify-content: space-between;
-      gap: 10px;
-      font-size: 0.75rem;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.72rem;
       margin-bottom: 4px;
     }
 
     .message-sender {
       font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+
+    .chat-message.my-message .message-sender {
+      color: #e0f2fe !important;
     }
 
     .message-time {
-      color: #64748b;
+      color: rgba(255, 255, 255, 0.45);
+      font-size: 0.68rem;
+    }
+
+    .chat-message.my-message .message-time {
+      color: rgba(255, 255, 255, 0.7);
     }
 
     .message-text {
       font-size: 0.95rem;
-      line-height: 1.35;
-      color: #f1f5f9;
+      line-height: 1.4;
+      color: #f8fafc;
     }
 
-    /* СТИЛИ СТИКЕРОВ */
+    /* Панель ввода */
+    .chat-input-area {
+      padding: 10px 14px;
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(8px);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
     .sticker-toggle-btn {
-      background: none;
-      border: none;
-      font-size: 1.3rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 1.2rem;
       cursor: pointer;
-      padding: 4px 8px;
-      border-radius: 8px;
-      transition: background-color 0.2s;
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      transition: all 0.2s ease;
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
     .sticker-toggle-btn:hover {
-      background-color: #334155;
+      background: rgba(255, 255, 255, 0.15);
+      transform: scale(1.05);
     }
 
+    .chat-input {
+      flex: 1;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #f8fafc;
+      padding: 10px 16px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .chat-input:focus {
+      border-color: #38bdf8;
+      background: rgba(15, 23, 42, 0.9);
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
+    }
+
+    .chat-send-btn {
+      width: 42px;
+      height: 40px;
+      background: linear-gradient(135deg, #38bdf8, #0284c7);
+      color: #ffffff;
+      border: none;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
+    }
+
+    .chat-send-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 18px rgba(56, 189, 248, 0.5);
+      background: linear-gradient(135deg, #7dd3fc, #0284c7);
+    }
+
+    /* Панель выбора стикеров */
     .sticker-picker {
-      background-color: #0f172a;
-      border-top: 1px solid #334155;
-      padding: 10px 12px;
+      background: rgba(15, 23, 42, 0.95);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 12px 14px;
       display: none;
       flex-direction: column;
-      gap: 8px;
-      max-height: 250px; /* Увеличено под 40 стикеров */
+      gap: 10px;
+      max-height: 260px;
       overflow-y: auto;
       overscroll-behavior: contain;
+      backdrop-filter: blur(10px);
     }
 
     .sticker-picker.active {
@@ -466,11 +581,11 @@
     }
 
     .sticker-picker-title {
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       color: #94a3b8;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.8px;
     }
 
     .sticker-grid {
@@ -484,90 +599,49 @@
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      padding: 6px;
-      background-color: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 10px;
-      transition: all 0.2s ease;
+      padding: 8px;
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
     .sticker-item:hover {
-      transform: translateY(-2px) scale(1.1);
+      transform: translateY(-3px) scale(1.15);
       border-color: #38bdf8;
-      background-color: rgba(56, 189, 248, 0.15);
+      background: rgba(56, 189, 248, 0.15);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
 
     .sticker-item img {
-      width: 38px;
-      height: 38px;
+      width: 40px;
+      height: 40px;
       object-fit: contain;
     }
 
+    /* Оформление стикеров в чате */
     .chat-message.is-sticker {
       background: transparent !important;
       border: none !important;
-      padding: 0 !important;
+      padding: 4px !important;
       box-shadow: none !important;
     }
 
     .chat-message.is-sticker .message-body {
-      margin-top: 4px;
+      margin-top: 6px;
     }
 
     .chat-message.is-sticker img.tg-sticker-img {
-      width: 95px;
-      height: 95px;
+      width: 110px;
+      height: 110px;
       object-fit: contain;
       display: block;
-      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4));
-      transition: transform 0.2s ease;
+      filter: drop-shadow(0 6px 12px rgba(0,0,0,0.5));
+      transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
     .chat-message.is-sticker img.tg-sticker-img:hover {
-      transform: scale(1.05);
-    }
-
-    .chat-input-area {
-      padding: 7px;
-      background-color: #0f172a;
-      border-top: 1px solid #334155;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .chat-input {
-      flex: 1;
-      background-color: #1e293b;
-      border: 1px solid #334155;
-      color: #f8fafc;
-      padding: 8px 12px;
-      border-radius: 8px;
-      font-size: 0.95rem;
-      outline: none;
-    }
-
-    .chat-input:focus {
-      border-color: #38bdf8;
-    }
-
-    .chat-send-btn {
-      width: 40px;
-      height: 36px;
-      background-color: #38bdf8;
-      color: #0f172a;
-      border: none;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: background-color 0.2s;
-    }
-
-    .chat-send-btn:hover {
-      background-color: #0284c7;
-      color: #fff;
+      transform: scale(1.1) rotate(2deg);
     }
   </style>
 
@@ -663,7 +737,7 @@
       "122": false, "50": false, "53": false, "17": false, "110": false
     };
 
-    const TIMEOUT_MS = 10 * 60 * 1000; 
+    const TIMEOUT_MS = 6 * 60 * 1000; 
 
     // 40 СМЕШНЫХ И ВЫРАЗИТЕЛЬНЫХ СТИКЕРОВ В TELEGRAM-СТИЛЕ
     const TELEGRAM_STICKERS = [
@@ -1224,3 +1298,4 @@
   </script>
 </body>
 </html>
+
