@@ -2,20 +2,14 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   
   <!-- Запрет кэширования для браузеров -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
 
-  <title>Отчет по закрытию отделений</title>
-
-  <!-- Подключение Flatpickr CSS & JS -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-  <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css" id="flatpickrTheme">
-  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ru.js"></script>
+  <title>Отчет по закрытию отделений и График</title>
 
   <style>
     /* ==========================================
@@ -51,6 +45,14 @@
       --chat-msg-other-bg: #1e293b;
       --chat-msg-other-border: rgba(255, 255, 255, 0.08);
       --chat-msg-text: #f8fafc;
+
+      /* Цвета графика */
+      --color-98-bg: #1d4ed8;
+      --color-98-text: #ffffff;
+      --color-163-bg: #d97706;
+      --color-163-text: #ffffff;
+      --color-vh-bg: #15803d;
+      --color-vh-text: #ffffff;
     }
 
     [data-theme="light"] {
@@ -86,6 +88,14 @@
       --chat-msg-other-bg: #f1f5f9;
       --chat-msg-other-border: #e2e8f0;
       --chat-msg-text: #0f172a;
+
+      /* Цвета графика в светлой теме */
+      --color-98-bg: #3b82f6;
+      --color-98-text: #ffffff;
+      --color-163-bg: #fef3c7;
+      --color-163-text: #78350f;
+      --color-vh-bg: #22c55e;
+      --color-vh-text: #ffffff;
     }
 
     * {
@@ -119,7 +129,7 @@
       max-width: 500px;
       position: sticky;
       top: 0;
-      padding: 16px;
+      padding: 12px 16px;
       border-radius: 12px;
       margin-bottom: 16px;
       display: flex;
@@ -131,7 +141,7 @@
 
     .title {
       font-size: 1.1rem;
-      font-weight: 600;
+      font-weight: 700;
     }
 
     .header-controls {
@@ -140,29 +150,10 @@
       gap: 8px;
     }
 
-    /* Календарь в хэдере */
-    .date-picker-input {
-      background: var(--input-bg);
-      border: 1px solid var(--input-border);
-      color: var(--input-text);
-      padding: 6px 10px;
-      border-radius: 8px;
-      font-size: 0.85rem;
-      outline: none;
-      cursor: pointer;
-      width: 110px;
-      text-align: center;
-      transition: all 0.2s ease;
-    }
-
-    .date-picker-input:focus {
-      border-color: #38bdf8;
-    }
-
-    .theme-toggle-btn {
+    .theme-toggle-btn, .icon-trigger-btn {
       background: var(--theme-btn-bg);
       border: 1px solid var(--theme-btn-border);
-      color: var(--theme-btn-color);
+      color: var(--text-color);
       width: 38px;
       height: 38px;
       border-radius: 50%;
@@ -175,7 +166,11 @@
       flex-shrink: 0;
     }
 
-    .theme-toggle-btn:hover {
+    .theme-toggle-btn {
+      color: var(--theme-btn-color);
+    }
+
+    .theme-toggle-btn:hover, .icon-trigger-btn:hover {
       transform: scale(1.08);
     }
 
@@ -382,13 +377,10 @@
       background-color: rgba(239, 68, 68, 0.1);
     }
 
-    /* Модальные окна */
+    /* МОДАЛЬНЫЕ ОКНА Общие */
     .modal-overlay {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      top: 0; left: 0; width: 100%; height: 100%;
       background: var(--modal-overlay);
       backdrop-filter: blur(4px);
       display: flex;
@@ -447,299 +439,202 @@
       line-height: 1;
     }
 
-    .modal-close-btn:hover {
-      color: var(--text-color);
-    }
-
-    .pending-body {
-      padding: 20px;
-      max-height: 70vh;
+    /* ОКНО КАЛЕНДАРЯ ГРАФИКА */
+    .calendar-modal-body {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 85vh;
       overflow-y: auto;
-      overscroll-behavior: contain;
     }
 
-    .pending-grid {
+    .auth-block {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      text-align: center;
+      padding: 20px 10px;
+    }
+
+    .pass-input {
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      color: var(--input-text);
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 1.1rem;
+      text-align: center;
+      outline: none;
+    }
+
+    .pass-btn {
+      background: #3b82f6;
+      color: #fff;
+      border: none;
+      padding: 12px;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .calendar-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      padding: 8px 12px;
+      border-radius: 10px;
+    }
+
+    .cal-btn {
+      background: none;
+      border: 1px solid var(--card-border);
+      color: var(--text-color);
+      width: 30px; height: 30px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .cal-title {
+      font-weight: 700;
+    }
+
+    .cal-legend {
+      display: flex;
+      justify-content: space-around;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: var(--card-bg);
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid var(--card-border);
+    }
+
+    .leg-item { display: flex; align-items: center; gap: 4px; }
+    .leg-dot { width: 10px; height: 10px; border-radius: 2px; }
+
+    .cal-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(75px, 1fr));
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+    }
+
+    .cal-weekday {
+      text-align: center;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #94a3b8;
+    }
+
+    .cal-day {
+      aspect-ratio: 1;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .cal-day.empty {
+      opacity: 0.1;
+      pointer-events: none;
+      border: none;
+      background: transparent;
+    }
+
+    .cal-day-num { font-size: 0.75rem; font-weight: 600; align-self: flex-start; }
+    .cal-day-badge { font-size: 0.7rem; font-weight: 800; line-height: 1; }
+
+    /* Стили назначенных смен */
+    .cal-day.st-98 { background: var(--color-98-bg); color: var(--color-98-text); border-color: transparent; }
+    .cal-day.st-163 { background: var(--color-163-bg); color: var(--color-163-text); border-color: transparent; }
+    .cal-day.st-vh { background: var(--color-vh-bg); color: var(--color-vh-text); border-color: transparent; }
+
+    /* МОДАЛКА ВЫБОРА СМЕНЫ В ДЕНЬ */
+    .shift-modal-card {
+      background: var(--modal-bg);
+      border: 1px solid var(--modal-border);
+      border-radius: 14px;
+      padding: 16px;
+      width: 280px;
+      display: flex;
+      flex-direction: column;
       gap: 10px;
     }
 
-    .pending-badge {
-      background-color: var(--badge-bg);
-      border: 1px solid var(--badge-border);
-      color: #0284c7;
+    .shift-opt-btn {
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
       font-weight: 700;
-      font-size: 1.05rem;
-      padding: 12px 8px;
-      border-radius: 10px;
-      text-align: center;
-      transition: all 0.3s ease;
-      opacity: 1;
-      transform: scale(1);
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
     }
 
-    [data-theme="dark"] .pending-badge {
-      color: #38bdf8;
-    }
-
-    .pending-badge.fade-out {
-      opacity: 0;
-      transform: scale(0.7);
-    }
-
-    .pending-empty {
-      text-align: center;
-      color: #22c55e;
-      font-weight: 600;
-      padding: 30px 10px;
-      font-size: 1.1rem;
-    }
+    .opt-98 { background: var(--color-98-bg); }
+    .opt-163 { background: var(--color-163-bg); color: var(--color-163-text); }
+    .opt-vh { background: var(--color-vh-bg); }
+    .opt-reset { background: transparent; border: 1px solid var(--card-border); color: #ef4444; }
 
     /* ЧАТ */
     .chat-modal {
       height: 85vh;
       max-height: 650px;
-      background: var(--modal-bg);
-      border: 1px solid var(--modal-border);
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
-      color: var(--text-color);
     }
 
-    .chat-modal .modal-header {
-      background: var(--header-bg);
-      border-bottom: 1px solid var(--modal-border);
-      padding: 14px 18px;
-      color: var(--text-color);
-    }
-
-    .chat-messages::-webkit-scrollbar,
-    .sticker-picker::-webkit-scrollbar {
-      width: 5px;
-    }
-    .chat-messages::-webkit-scrollbar-track,
-    .sticker-picker::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    .chat-messages::-webkit-scrollbar-thumb,
-    .sticker-picker::-webkit-scrollbar-thumb {
-      background: var(--status-btn-border);
-      border-radius: 10px;
-    }
+    .chat-messages::-webkit-scrollbar, .sticker-picker::-webkit-scrollbar { width: 5px; }
+    .chat-messages::-webkit-scrollbar-thumb, .sticker-picker::-webkit-scrollbar-thumb { background: var(--status-btn-border); border-radius: 10px; }
 
     .chat-messages {
-      flex: 1;
-      padding: 18px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      background: var(--bg-color);
-      overscroll-behavior: contain;
+      flex: 1; padding: 18px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: var(--bg-color); overscroll-behavior: contain;
     }
 
     .chat-message {
-      position: relative;
-      background: var(--chat-msg-other-bg);
-      border: 1px solid var(--chat-msg-other-border);
-      padding: 10px 14px;
-      border-radius: 16px 16px 16px 4px;
-      max-width: 80%;
-      word-wrap: break-word;
-      align-self: flex-start;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-      animation: msgPop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      position: relative; background: var(--chat-msg-other-bg); border: 1px solid var(--chat-msg-other-border); padding: 10px 14px; border-radius: 16px 16px 16px 4px; max-width: 80%; word-wrap: break-word; align-self: flex-start; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     }
 
     .chat-message.my-message {
-      align-self: flex-end;
-      background: linear-gradient(135deg, #3b82f6, #2563eb);
-      border: none;
-      border-radius: 16px 16px 4px 16px;
-      box-shadow: 0 4px 15px rgba(37, 99, 235, 0.25);
+      align-self: flex-end; background: linear-gradient(135deg, #3b82f6, #2563eb); border: none; border-radius: 16px 16px 4px 16px;
     }
 
-    @keyframes msgPop {
-      from { opacity: 0; transform: translateY(8px) scale(0.96); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
-    }
+    .message-meta { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 0.72rem; margin-bottom: 4px; }
+    .message-sender { font-weight: 700; }
+    .chat-message.my-message .message-sender { color: #e0f2fe !important; }
+    .message-time { color: var(--status-btn-text); font-size: 0.68rem; }
+    .chat-message.my-message .message-time { color: rgba(255, 255, 255, 0.8); }
+    .message-text { font-size: 0.95rem; line-height: 1.4; color: var(--chat-msg-text); }
+    .chat-message.my-message .message-text { color: #ffffff; }
 
-    .message-meta {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      font-size: 0.72rem;
-      margin-bottom: 4px;
-    }
+    .chat-input-area { padding: 10px 14px; background: var(--header-bg); border-top: 1px solid var(--modal-border); display: flex; align-items: center; gap: 10px; }
+    .sticker-toggle-btn { background: var(--status-btn-bg); border: 1px solid var(--status-btn-border); font-size: 1.2rem; cursor: pointer; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+    .chat-input { flex: 1; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--input-text); padding: 10px 16px; border-radius: 12px; font-size: 0.95rem; outline: none; }
+    .chat-send-btn { width: 42px; height: 40px; background: linear-gradient(135deg, #38bdf8, #0284c7); color: #ffffff; border: none; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
 
-    .message-sender {
-      font-weight: 700;
-      letter-spacing: 0.2px;
-    }
+    .sticker-picker { background: var(--modal-bg); border-top: 1px solid var(--modal-border); padding: 12px 14px; display: none; flex-direction: column; gap: 10px; max-height: 260px; overflow-y: auto; }
+    .sticker-picker.active { display: flex; }
+    .sticker-grid { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
+    .sticker-item { display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 8px; background: var(--status-btn-bg); border: 1px solid var(--status-btn-border); border-radius: 12px; }
+    .sticker-item img { width: 40px; height: 40px; object-fit: contain; }
 
-    .chat-message.my-message .message-sender {
-      color: #e0f2fe !important;
-    }
+    .chat-message.is-sticker { background: transparent !important; border: none !important; padding: 4px !important; box-shadow: none !important; }
+    .chat-message.is-sticker img.tg-sticker-img { width: 110px; height: 110px; object-fit: contain; display: block; }
 
-    .message-time {
-      color: var(--status-btn-text);
-      font-size: 0.68rem;
-    }
-
-    .chat-message.my-message .message-time {
-      color: rgba(255, 255, 255, 0.8);
-    }
-
-    .message-text {
-      font-size: 0.95rem;
-      line-height: 1.4;
-      color: var(--chat-msg-text);
-    }
-
-    .chat-message.my-message .message-text {
-      color: #ffffff;
-    }
-
-    .chat-input-area {
-      padding: 10px 14px;
-      background: var(--header-bg);
-      border-top: 1px solid var(--modal-border);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .sticker-toggle-btn {
-      background: var(--status-btn-bg);
-      border: 1px solid var(--status-btn-border);
-      font-size: 1.2rem;
-      cursor: pointer;
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .sticker-toggle-btn:hover {
-      transform: scale(1.05);
-    }
-
-    .chat-input {
-      flex: 1;
-      background: var(--input-bg);
-      border: 1px solid var(--input-border);
-      color: var(--input-text);
-      padding: 10px 16px;
-      border-radius: 12px;
-      font-size: 0.95rem;
-      outline: none;
-      transition: all 0.2s ease;
-      width: 80%;
-    }
-
-    .chat-input:focus {
-      border-color: #38bdf8;
-    }
-
-    .chat-send-btn {
-      width: 42px;
-      height: 40px;
-      background: linear-gradient(135deg, #38bdf8, #0284c7);
-      color: #ffffff;
-      border: none;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
-    }
-
-    .chat-send-btn:hover {
-      transform: scale(1.05);
-    }
-
-    .sticker-picker {
-      background: var(--modal-bg);
-      border-top: 1px solid var(--modal-border);
-      padding: 12px 14px;
-      display: none;
-      flex-direction: column;
-      gap: 10px;
-      max-height: 260px;
-      overflow-y: auto;
-      overscroll-behavior: contain;
-    }
-
-    .sticker-picker.active {
-      display: flex;
-    }
-
-    .sticker-picker-title {
-      font-size: 0.72rem;
-      color: var(--status-btn-text);
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-    }
-
-    .sticker-grid {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      gap: 8px;
-    }
-
-    .sticker-item {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      padding: 8px;
-      background: var(--status-btn-bg);
-      border: 1px solid var(--status-btn-border);
-      border-radius: 12px;
-      transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-
-    .sticker-item:hover {
-      transform: translateY(-3px) scale(1.15);
-      border-color: #38bdf8;
-    }
-
-    .sticker-item img {
-      width: 40px;
-      height: 40px;
-      object-fit: contain;
-    }
-
-    .chat-message.is-sticker {
-      background: transparent !important;
-      border: none !important;
-      padding: 4px !important;
-      box-shadow: none !important;
-    }
-
-    .chat-message.is-sticker .message-body {
-      margin-top: 6px;
-    }
-
-    .chat-message.is-sticker img.tg-sticker-img {
-      width: 110px;
-      height: 110px;
-      object-fit: contain;
-      display: block;
-      filter: drop-shadow(0 6px 12px rgba(0,0,0,0.2));
-      transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-
-    .chat-message.is-sticker img.tg-sticker-img:hover {
-      transform: scale(1.1) rotate(2deg);
-    }
+    /* ОСТАТОК МОДАЛКА */
+    .pending-body { padding: 20px; max-height: 70vh; overflow-y: auto; }
+    .pending-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(75px, 1fr)); gap: 10px; }
+    .pending-badge { background-color: var(--badge-bg); border: 1px solid var(--badge-border); color: #0284c7; font-weight: 700; font-size: 1.05rem; padding: 12px 8px; border-radius: 10px; text-align: center; }
+    [data-theme="dark"] .pending-badge { color: #38bdf8; }
+    .pending-empty { text-align: center; color: #22c55e; font-weight: 600; padding: 30px 10px; font-size: 1.1rem; }
   </style>
 
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -750,21 +645,13 @@
   <div class="header">
     <div class="title">КЗ</div>
     <div class="header-controls">
-      <!-- Календарь выбора даты (Flatpickr) -->
-      <input type="text" id="datePicker" class="date-picker-input" placeholder="Выберите дату" readonly>
+      <!-- Иконка Календаря графика с паролем -->
+      <button class="icon-trigger-btn" onclick="openScheduleModal()" title="График работы (Пароль)">📅</button>
 
       <!-- Переключатель темы -->
       <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Сменить тему">
         <svg id="sunIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="5"></circle>
-          <line x1="12" y1="1" x2="12" y2="3"></line>
-          <line x1="12" y1="21" x2="12" y2="23"></line>
-          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-          <line x1="1" y1="12" x2="3" y2="12"></line>
-          <line x1="21" y1="12" x2="23" y2="12"></line>
-          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          <circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
         </svg>
         <svg id="moonIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
           <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
@@ -782,12 +669,7 @@
   </div>
 
   <div class="search-container">
-    <input 
-      type="number" 
-      id="searchInput" 
-      class="search-input" 
-      placeholder="Введите № отделения..."
-    >
+    <input type="number" id="searchInput" class="search-input" placeholder="Введите № отделения...">
     <button class="clear-search-btn" id="clearSearchBtn" onclick="clearSearch()">✕</button>
   </div>
 
@@ -797,26 +679,70 @@
     <button class="reset-btn" id="resetBtn" onclick="resetAll()">Сбросить всё пароль (00) [00:30]</button>
   </div>
 
+  <!-- МОДАЛКА КАЛЕНДАРЯ-ГРАФИКА -->
+  <div class="modal-overlay" id="scheduleModalOverlay" onclick="handleOverlayClick(event, 'schedule')">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-header-title"><span>📅 График работы сотрудника</span></div>
+        <button class="modal-close-btn" onclick="closeScheduleModal()">✕</button>
+      </div>
+      <div class="calendar-modal-body">
+        
+        <!-- Блок ввода пароля -->
+        <div class="auth-block" id="calAuthBlock">
+          <div>🔒 Вход защищен паролем</div>
+          <input type="password" id="calPassInput" class="pass-input" placeholder="Пароль доступа" maxlength="10">
+          <button class="pass-btn" onclick="verifyCalPass()">Войти</button>
+        </div>
+
+        <!-- Контент Календаря -->
+        <div id="calContentBlock" style="display: none; flex-direction: column; gap: 12px;">
+          <div class="calendar-nav">
+            <button class="cal-btn" onclick="changeCalMonth(-1)">←</button>
+            <div class="cal-title" id="calMonthTitle">Август 2026</div>
+            <button class="cal-btn" onclick="changeCalMonth(1)">→</button>
+          </div>
+
+          <div class="cal-legend">
+            <div class="leg-item"><div class="leg-dot" style="background:var(--color-98-bg)"></div> 98 отд.</div>
+            <div class="leg-item"><div class="leg-dot" style="background:var(--color-163-bg)"></div> 163 отд.</div>
+            <div class="leg-item"><div class="leg-dot" style="background:var(--color-vh-bg)"></div> ВХ</div>
+          </div>
+
+          <div class="cal-grid" id="calGrid"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- МОДАЛКА ВЫБОРА СМЕНЫ В ДЕНЬ -->
+  <div class="modal-overlay" id="shiftModalOverlay" onclick="handleOverlayClick(event, 'shift')">
+    <div class="shift-modal-card">
+      <div style="font-weight: 700; text-align: center;" id="shiftModalTitle">Назначить смену</div>
+      <button class="shift-opt-btn opt-98" onclick="setShift('98')"><span>98 Отделение</span> <span>🟦</span></button>
+      <button class="shift-opt-btn opt-163" onclick="setShift('163')"><span>163 Отделение</span> <span>🟨</span></button>
+      <button class="shift-opt-btn opt-vh" onclick="setShift('vh')"><span>Выходной (ВХ)</span> <span>🟩</span></button>
+      <button class="shift-opt-btn opt-reset" onclick="setShift(null)"><span>Сбросить день</span> <span>✕</span></button>
+    </div>
+  </div>
+
   <!-- Модалка чата -->
   <div class="modal-overlay" id="chatModalOverlay" onclick="handleOverlayClick(event, 'chat')">
     <div class="modal-card chat-modal">
       <div class="modal-header">
-        <div class="modal-header-title">
-          <span>💬 Анонимный чат</span>
-        </div>
+        <div class="modal-header-title"><span>💬 Анонимный чат</span></div>
         <button class="modal-close-btn" onclick="closeChat()">✕</button>
       </div>
       <div class="chat-messages" id="chatMessages"></div>
-
       <div class="sticker-picker" id="stickerPicker">
-        <div class="sticker-picker-title">Стикеры</div>
+        <div style="font-size: 0.72rem; color: var(--status-btn-text); font-weight: 700; text-transform: uppercase;">Стикеры</div>
         <div class="sticker-grid" id="stickerGrid"></div>
       </div>
-
       <form class="chat-input-area" onsubmit="sendMessage(event)">
         <button type="button" class="sticker-toggle-btn" onclick="toggleStickerPicker()" title="Выбрать стикер">🤡</button>
         <input type="text" id="chatInput" class="chat-input" placeholder="Напишите сообщение..." maxlength="300" autocomplete="off">
-        <button type="submit" class="chat-send-btn" title="Отправить">
+        <button type="submit" class="chat-send-btn">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="22" y1="2" x2="11" y2="13"></line>
             <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
@@ -826,29 +752,24 @@
     </div>
   </div>
 
-  <!-- Модалка списка остатка -->
+  <!-- Модалка остатка -->
   <div class="modal-overlay" id="pendingModalOverlay" onclick="handleOverlayClick(event, 'pending')">
     <div class="modal-card">
       <div class="modal-header">
-        <div class="modal-header-title">
-          <span>⏳ Осталось закрыть</span>
-        </div>
+        <div class="modal-header-title"><span>⏳ Осталось закрыть</span></div>
         <button class="modal-close-btn" onclick="closePendingModal()">✕</button>
       </div>
-      <div class="pending-body">
-        <div class="pending-grid" id="pendingGrid"></div>
-      </div>
+      <div class="pending-body"><div class="pending-grid" id="pendingGrid"></div></div>
     </div>
   </div>
 
   <script>
     // ==========================================
-    // ЛОГИКА ТЕМЫ И Flatpickr
+    // ТЕМА
     // ==========================================
     const STORAGE_KEY_THEME = 'app_theme';
     const sunIcon = document.getElementById('sunIcon');
     const moonIcon = document.getElementById('moonIcon');
-    const flatpickrThemeLink = document.getElementById('flatpickrTheme');
 
     function applyTheme(theme) {
       document.documentElement.setAttribute('data-theme', theme);
@@ -856,81 +777,35 @@
       if (theme === 'light') {
         sunIcon.style.display = 'none';
         moonIcon.style.display = 'block';
-        flatpickrThemeLink.href = "https://npmcdn.com/flatpickr/dist/themes/material_blue.css";
       } else {
         sunIcon.style.display = 'block';
         moonIcon.style.display = 'none';
-        flatpickrThemeLink.href = "https://npmcdn.com/flatpickr/dist/themes/dark.css";
       }
     }
 
     function toggleTheme() {
       const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-      applyTheme(newTheme);
+      applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
     }
 
-    const savedTheme = localStorage.getItem(STORAGE_KEY_THEME) || 'dark';
-    applyTheme(savedTheme);
+    applyTheme(localStorage.getItem(STORAGE_KEY_THEME) || 'dark');
 
     // ==========================================
-    // ЛОГИКА ПРИЛОЖЕНИЯ И КАЛЕНДАРЯ
+    // ДАННЫЕ И FIREBASE
     // ==========================================
-    const BRANCH_NUMBERS = [
-      51, 37, 57, 7, 124, 148, 88, 127, 119, 68, 
-      163, 76, 95, 98, 96, 122, 50, 53, 17, 110
-    ];
-
-    const INITIAL_STATUSES = {
-      "51": false, "37": false, "57": false, "7": false, "124": false,
-      "148": false, "88": false, "127": false, "119": false, "68": false,
-      "163": false, "76": false, "95": false, "98": false, "96": false,
-      "122": false, "50": false, "53": false, "17": false, "110": false
-    };
-
-    const TIMEOUT_MS = 12 * 60 * 1000; 
+    const BRANCH_NUMBERS = [51, 37, 57, 7, 124, 148, 88, 127, 119, 68, 163, 76, 95, 98, 96, 122, 50, 53, 17, 110];
+    const INITIAL_STATUSES = {"51":false,"37":false,"57":false,"7":false,"124":false,"148":false,"88":false,"127":false,"119":false,"68":false,"163":false,"76":false,"95":false,"98":false,"96":false,"122":false,"50":false,"53":false,"17":false,"110":false};
+    const TIMEOUT_MS = 12 * 60 * 1000;
 
     const TELEGRAM_STICKERS = [
       "https://em-content.zobj.net/source/telegram/386/clown-face_1f921.webp",
       "https://em-content.zobj.net/source/telegram/386/cat-with-tears-of-joy_1f639.webp",
       "https://em-content.zobj.net/source/telegram/386/crying-cat_1f63f.webp",
-      "https://em-content.zobj.net/source/telegram/386/pouting-cat_1f63e.webp",
       "https://em-content.zobj.net/source/telegram/386/screaming-cat_1f640.webp",
-      "https://em-content.zobj.net/source/telegram/386/grinning-cat-with-smiling-eyes_1f638.webp",
-      "https://em-content.zobj.net/source/telegram/386/smiling-cat-with-heart-eyes_1f63b.webp",
-      "https://em-content.zobj.net/source/telegram/386/cat-with-wry-smile_1f63c.webp",
       "https://em-content.zobj.net/source/telegram/386/face-with-tears-of-joy_1f602.webp",
-      "https://em-content.zobj.net/source/telegram/386/rolling-on-the-floor-laughing_1f923.webp",
-      "https://em-content.zobj.net/source/telegram/386/exploding-head_1f92f.webp",
-      "https://em-content.zobj.net/source/telegram/386/melting-face_1e9e0.webp",
-      "https://em-content.zobj.net/source/telegram/386/saluting-face_1e9e1.webp",
-      "https://em-content.zobj.net/source/telegram/386/face-with-peeking-eye_1e9e3.webp",
-      "https://em-content.zobj.net/source/telegram/386/thinking-face_1f914.webp",
-      "https://em-content.zobj.net/source/telegram/386/shushing-face_1f92b.webp",
-      "https://em-content.zobj.net/source/telegram/386/face-with-monocle_1f9d0.webp",
-      "https://em-content.zobj.net/source/telegram/386/nerd-face_1f913.webp",
-      "https://em-content.zobj.net/source/telegram/386/woozy-face_1f974.webp",
       "https://em-content.zobj.net/source/telegram/386/partying-face_1f973.webp",
-      "https://em-content.zobj.net/source/telegram/386/face-holding-back-tears_1e9e9.webp",
-      "https://em-content.zobj.net/source/telegram/386/face-screaming-in-fear_1f631.webp",
-      "https://em-content.zobj.net/source/telegram/386/flushed-face_1f633.webp",
       "https://em-content.zobj.net/source/telegram/386/thumbs-up_1f44d.webp",
-      "https://em-content.zobj.net/source/telegram/386/facepalm_1f926.webp",
-      "https://em-content.zobj.net/source/telegram/386/pinched-fingers_1f90c.webp",
-      "https://em-content.zobj.net/source/telegram/386/ok-hand_1f44c.webp",
-      "https://em-content.zobj.net/source/telegram/386/victory-hand_270c-fe0f.webp",
-      "https://em-content.zobj.net/source/telegram/386/middle-finger_1f595.webp",
-      "https://em-content.zobj.net/source/telegram/386/clapping-hands_1f44f.webp",
-      "https://em-content.zobj.net/source/telegram/386/folded-hands_1f64f.webp",
-      "https://em-content.zobj.net/source/telegram/386/fire_1f525.webp",
-      "https://em-content.zobj.net/source/telegram/386/package_1f4e6.webp",
-      "https://em-content.zobj.net/source/telegram/386/delivery-truck_1f69a.webp",
-      "https://em-content.zobj.net/source/telegram/386/rocket_1f680.webp",
-      "https://em-content.zobj.net/source/telegram/386/pile-of-poo_1f4a9.webp",
-      "https://em-content.zobj.net/source/telegram/386/party-popper_1f389.webp",
-      "https://em-content.zobj.net/source/telegram/386/check-mark-button_2705.webp",
-      "https://em-content.zobj.net/source/telegram/386/cross-mark_274c.webp",
-      "https://em-content.zobj.net/source/telegram/386/ghost_1f47b.webp"
+      "https://em-content.zobj.net/source/telegram/386/fire_1f525.webp"
     ];
 
     const firebaseConfig = {
@@ -940,8 +815,7 @@
       projectId: "mid-np-470dc",
       storageBucket: "mid-np-470dc.firebasestorage.app",
       messagingSenderId: "1051368843938",
-      appId: "1:1051368843938:web:bf019281005027580345fb",
-      measurementId: "G-YERGDJ4FXT"
+      appId: "1:1051368843938:web:bf019281005027580345fb"
     };
 
     firebase.initializeApp(firebaseConfig);
@@ -956,76 +830,28 @@
     }
 
     let selectedDate = getFormattedToday();
-
-    // Инициализация Flatpickr
-    const fp = flatpickr("#datePicker", {
-      locale: "ru",
-      dateFormat: "Y-m-d",
-      altInput: true,
-      altFormat: "d.m.Y",
-      defaultDate: selectedDate,
-      disableMobile: true,
-      onChange: function(selectedDates, dateStr) {
-        if (dateStr) {
-          handleDateChange(dateStr);
-        }
-      }
-    });
-
     let branchesRef = null;
     let lastActivityRef = null;
     const chatRef = db.ref('chat_messages_v1');
 
     let serverTimeOffset = 0;
-    db.ref('.info/serverTimeOffset').on('value', (snap) => {
-      serverTimeOffset = snap.val() || 0;
-    });
+    db.ref('.info/serverTimeOffset').on('value', snap => serverTimeOffset = snap.val() || 0);
 
-    const STORAGE_KEY_FILTER = 'branches_filter_app';
-    const STORAGE_KEY_USER_ID = 'chat_user_id';
-    const STORAGE_KEY_USER_COLOR = 'chat_user_color';
+    let myUserId = localStorage.getItem('chat_user_id') || ('Аноним #' + Math.floor(100 + Math.random() * 900));
+    localStorage.setItem('chat_user_id', myUserId);
 
-    let myUserId = localStorage.getItem(STORAGE_KEY_USER_ID);
-    if (!myUserId) {
-      myUserId = 'Аноним #' + Math.floor(100 + Math.random() * 900);
-      localStorage.setItem(STORAGE_KEY_USER_ID, myUserId);
-    }
-
-    let myUserColor = localStorage.getItem(STORAGE_KEY_USER_COLOR);
-    if (!myUserColor) {
-      const colors = ['#38bdf8', '#4ade80', '#f43f5e', '#fbbf24', '#c084fc', '#f97316'];
-      myUserColor = colors[Math.floor(Math.random() * colors.length)];
-      localStorage.setItem(STORAGE_KEY_USER_COLOR, myUserColor);
-    }
+    let myUserColor = localStorage.getItem('chat_user_color') || ['#38bdf8', '#4ade80', '#f43f5e', '#fbbf24', '#c084fc'][Math.floor(Math.random()*5)];
+    localStorage.setItem('chat_user_color', myUserColor);
 
     let branchStatus = { ...INITIAL_STATUSES };
     let lastActivityTimestamp = null;
-    let savedFilter = localStorage.getItem(STORAGE_KEY_FILTER) || '';
-    let wasExpiredState = false;
-
-    let audioCtx = null;
-    let hasPlayedSoundThisCycle = false;
-
-    let isChatOpen = false;
-    let unreadCount = 0;
-    let isInitialChatLoad = true;
-    let isPendingModalOpen = false;
+    let isChatOpen = false, unreadCount = 0, isInitialChatLoad = true;
 
     const gridEl = document.getElementById('branchesGrid');
     const counterEl = document.getElementById('counter');
     const searchInput = document.getElementById('searchInput');
     const clearSearchBtn = document.getElementById('clearSearchBtn');
     const resetBtn = document.getElementById('resetBtn');
-    
-    const chatModalOverlay = document.getElementById('chatModalOverlay');
-    const chatMessagesEl = document.getElementById('chatMessages');
-    const chatInputEl = document.getElementById('chatInput');
-    const chatBadgeEl = document.getElementById('chatBadge');
-    const stickerPickerEl = document.getElementById('stickerPicker');
-    const stickerGridEl = document.getElementById('stickerGrid');
-
-    const pendingModalOverlay = document.getElementById('pendingModalOverlay');
-    const pendingGridEl = document.getElementById('pendingGrid');
 
     function bindFirebaseDateListeners(dateStr) {
       if (branchesRef) branchesRef.off();
@@ -1034,14 +860,13 @@
       branchesRef = db.ref(`history/${dateStr}/branches_map`);
       lastActivityRef = db.ref(`history/${dateStr}/last_activity`);
 
-      lastActivityRef.on('value', (snapshot) => {
-        const val = snapshot.val();
-        lastActivityTimestamp = val || null;
+      lastActivityRef.on('value', snap => {
+        lastActivityTimestamp = snap.val() || null;
         updateTimerAndState();
       });
 
-      branchesRef.on('value', (snapshot) => {
-        const data = snapshot.val();
+      branchesRef.on('value', snap => {
+        const data = snap.val();
         if (!data) {
           branchesRef.set(INITIAL_STATUSES);
           lastActivityRef.set(firebase.database.ServerValue.TIMESTAMP);
@@ -1049,282 +874,167 @@
           branchStatus = data;
           renderGrid();
           renderPendingGrid();
-          updateTimerAndState();
         }
-      }, (error) => {
-        console.error("Ошибка чтения Firebase:", error);
-        gridEl.innerHTML = '<div class="no-results">Ошибка подключения к базе данных!</div>';
       });
-    }
-
-    function handleDateChange(newDate) {
-      if (!newDate) return;
-      selectedDate = newDate;
-      bindFirebaseDateListeners(selectedDate);
     }
 
     bindFirebaseDateListeners(selectedDate);
 
-    function initStickers() {
-      if (!stickerGridEl) return;
-      stickerGridEl.innerHTML = '';
-      TELEGRAM_STICKERS.forEach((url) => {
-        const item = document.createElement('div');
-        item.className = 'sticker-item';
-        
-        const img = document.createElement('img');
-        img.src = url;
-        img.loading = 'lazy';
-        img.onerror = () => { item.style.display = 'none'; };
+    // ==========================================
+    // ГРАФИК РАБОТЫ (КАЛЕНДАРЬ С ПАРОЛЕМ 16398)
+    // ==========================================
+    const CAL_PASS = "16398";
+    let isCalAuthed = false;
+    let calCurrentDate = new Date();
+    let selectedCalDay = null;
+    let calScheduleData = {};
+    let calScheduleRef = null;
 
-        item.appendChild(img);
-        item.onclick = () => sendSticker(url);
-        stickerGridEl.appendChild(item);
+    const MONTH_NAMES = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+
+    function openScheduleModal() {
+      document.body.classList.add('modal-open');
+      document.getElementById('scheduleModalOverlay').classList.add('active');
+      if (isCalAuthed) {
+        showCalContent();
+      }
+    }
+
+    function closeScheduleModal() {
+      document.body.classList.remove('modal-open');
+      document.getElementById('scheduleModalOverlay').classList.remove('active');
+    }
+
+    function verifyCalPass() {
+      const val = document.getElementById('calPassInput').value.trim();
+      if (val === CAL_PASS) {
+        isCalAuthed = true;
+        showCalContent();
+      } else {
+        alert("Неверный пароль!");
+        document.getElementById('calPassInput').value = '';
+      }
+    }
+
+    function showCalContent() {
+      document.getElementById('calAuthBlock').style.display = 'none';
+      document.getElementById('calContentBlock').style.display = 'flex';
+      initScheduleCalendar();
+    }
+
+    function changeCalMonth(delta) {
+      calCurrentDate.setMonth(calCurrentDate.getMonth() + delta);
+      initScheduleCalendar();
+    }
+
+    function getCalMonthKey() {
+      const yyyy = calCurrentDate.getFullYear();
+      const mm = String(calCurrentDate.getMonth() + 1).padStart(2, '0');
+      return `${yyyy}-${mm}`;
+    }
+
+    function initScheduleCalendar() {
+      const monthKey = getCalMonthKey();
+      document.getElementById('calMonthTitle').textContent = `${MONTH_NAMES[calCurrentDate.getMonth()]} ${calCurrentDate.getFullYear()}`;
+
+      if (calScheduleRef) calScheduleRef.off();
+      calScheduleRef = db.ref(`schedules/${monthKey}`);
+
+      calScheduleRef.on('value', snap => {
+        calScheduleData = snap.val() || {};
+        renderScheduleGrid();
       });
     }
-    initStickers();
 
-    function toggleStickerPicker() {
-      stickerPickerEl.classList.toggle('active');
-    }
+    function renderScheduleGrid() {
+      const grid = document.getElementById('calGrid');
+      grid.innerHTML = '';
 
-    function sendSticker(stickerUrl) {
-      const newMsg = {
-        stickerUrl: stickerUrl,
-        isSticker: true,
-        senderId: myUserId,
-        color: myUserColor,
-        timestamp: firebase.database.ServerValue.TIMESTAMP
-      };
+      ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].forEach(d => {
+        const h = document.createElement('div');
+        h.className = 'cal-weekday';
+        h.textContent = d;
+        grid.appendChild(h);
+      });
 
-      chatRef.push(newMsg);
-      stickerPickerEl.classList.remove('active');
-    }
+      const year = calCurrentDate.getFullYear();
+      const month = calCurrentDate.getMonth();
+      const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7;
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-    document.addEventListener('click', () => {
-      if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      for (let i = 0; i < firstDayIndex; i++) {
+        const empty = document.createElement('div');
+        empty.className = 'cal-day empty';
+        grid.appendChild(empty);
       }
-      if (audioCtx && audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
-    }, { once: false });
 
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        if (isChatOpen) closeChat();
-        if (isPendingModalOpen) closePendingModal();
-      }
-    });
+      for (let day = 1; day <= daysInMonth; day++) {
+        const cell = document.createElement('div');
+        cell.className = 'cal-day';
 
-    function playSuccessSound() {
-      try {
-        if (!audioCtx) {
-          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        if (audioCtx.state === 'suspended') {
-          audioCtx.resume();
-        }
+        const shift = calScheduleData[`day_${day}`];
+        if (shift === '98') cell.classList.add('st-98');
+        if (shift === '163') cell.classList.add('st-163');
+        if (shift === 'vh') cell.classList.add('st-vh');
 
-        const now = audioCtx.currentTime;
+        const numSpan = document.createElement('span');
+        numSpan.className = 'cal-day-num';
+        numSpan.textContent = day;
 
-        const osc1 = audioCtx.createOscillator();
-        const gain1 = audioCtx.createGain();
-        osc1.type = 'sine';
-        osc1.frequency.setValueAtTime(659.25, now);
-        gain1.gain.setValueAtTime(0.3, now);
-        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
-        osc1.connect(gain1);
-        gain1.connect(audioCtx.destination);
-        osc1.start(now);
-        osc1.stop(now + 0.3);
+        const badgeSpan = document.createElement('span');
+        badgeSpan.className = 'cal-day-badge';
+        if (shift === '98') badgeSpan.textContent = '98';
+        if (shift === '163') badgeSpan.textContent = '163';
+        if (shift === 'vh') badgeSpan.textContent = 'ВХ';
 
-        const osc2 = audioCtx.createOscillator();
-        const gain2 = audioCtx.createGain();
-        osc2.type = 'sine';
-        osc2.frequency.setValueAtTime(880.00, now + 0.15);
-        gain2.gain.setValueAtTime(0.4, now + 0.15);
-        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
-        osc2.connect(gain2);
-        gain2.connect(audioCtx.destination);
-        osc2.start(now + 0.15);
-        osc2.stop(now + 0.6);
-      } catch (e) {
-        console.log("Ошибка звука:", e);
+        cell.appendChild(numSpan);
+        cell.appendChild(badgeSpan);
+
+        cell.onclick = () => openShiftModal(day);
+        grid.appendChild(cell);
       }
     }
 
-    searchInput.value = savedFilter;
+    function openShiftModal(day) {
+      selectedCalDay = day;
+      document.getElementById('shiftModalTitle').textContent = `${day} ${MONTH_NAMES[calCurrentDate.getMonth()]}`;
+      document.getElementById('shiftModalOverlay').classList.add('active');
+    }
 
-    chatRef.limitToLast(50).on('value', (snapshot) => {
-      const data = snapshot.val();
-      chatMessagesEl.innerHTML = '';
+    function closeShiftModal() {
+      document.getElementById('shiftModalOverlay').classList.remove('active');
+    }
 
-      if (data) {
-        const messages = Object.values(data);
-        messages.forEach(msg => {
-          renderChatMessage(msg);
-        });
+    function setShift(type) {
+      if (!selectedCalDay) return;
+      const monthKey = getCalMonthKey();
+      const ref = db.ref(`schedules/${monthKey}/day_${selectedCalDay}`);
 
-        if (isInitialChatLoad) {
-          isInitialChatLoad = false;
-        } else if (!isChatOpen) {
-          unreadCount++;
-          updateBadge();
-        }
-
-        if (isChatOpen) {
-          scrollChatToBottom();
-        }
+      if (type === null) {
+        ref.remove();
       } else {
-        chatMessagesEl.innerHTML = '<div class="no-results">Сообщений пока нет...</div>';
+        ref.set(type);
       }
-    });
-
-    function renderChatMessage(msg) {
-      const isMine = msg.senderId === myUserId;
-      const msgDiv = document.createElement('div');
-      
-      if (msg.isSticker) {
-        msgDiv.className = `chat-message is-sticker ${isMine ? 'my-message' : ''}`;
-      } else {
-        msgDiv.className = `chat-message ${isMine ? 'my-message' : ''}`;
-      }
-
-      const metaDiv = document.createElement('div');
-      metaDiv.className = 'message-meta';
-
-      const senderSpan = document.createElement('span');
-      senderSpan.className = 'message-sender';
-      senderSpan.textContent = isMine ? 'Вы' : msg.senderId;
-      senderSpan.style.color = isMine ? '#93c5fd' : (msg.color || '#38bdf8');
-
-      const timeSpan = document.createElement('span');
-      timeSpan.className = 'message-time';
-      
-      const date = new Date(msg.timestamp);
-      const hours = String(date.getHours()).padStart(2, '0');
-      const mins = String(date.getMinutes()).padStart(2, '0');
-      timeSpan.textContent = `${hours}:${mins}`;
-
-      metaDiv.appendChild(senderSpan);
-      metaDiv.appendChild(timeSpan);
-
-      const bodyDiv = document.createElement('div');
-
-      if (msg.isSticker) {
-        bodyDiv.className = 'message-body';
-        const img = document.createElement('img');
-        img.className = 'tg-sticker-img';
-        img.src = msg.stickerUrl;
-        img.alt = 'Sticker';
-        bodyDiv.appendChild(img);
-      } else {
-        bodyDiv.className = 'message-text';
-        bodyDiv.textContent = msg.text;
-      }
-
-      msgDiv.appendChild(metaDiv);
-      msgDiv.appendChild(bodyDiv);
-      chatMessagesEl.appendChild(msgDiv);
+      closeShiftModal();
     }
 
-    function sendMessage(e) {
-      e.preventDefault();
-      const text = chatInputEl.value.trim();
-      if (!text) return;
-
-      const newMsg = {
-        text: text,
-        senderId: myUserId,
-        color: myUserColor,
-        timestamp: firebase.database.ServerValue.TIMESTAMP
-      };
-
-      chatRef.push(newMsg);
-      chatInputEl.value = '';
-    }
-
-    function openChat() {
-      isChatOpen = true;
-      document.body.classList.add('modal-open');
-      chatModalOverlay.classList.add('active');
-      unreadCount = 0;
-      updateBadge();
-      scrollChatToBottom();
-      setTimeout(() => chatInputEl.focus(), 100);
-    }
-
-    function closeChat() {
-      isChatOpen = false;
-      document.body.classList.remove('modal-open');
-      chatModalOverlay.classList.remove('active');
-      stickerPickerEl.classList.remove('active');
-    }
-
-    function openPendingModal() {
-      isPendingModalOpen = true;
-      document.body.classList.add('modal-open');
-      renderPendingGrid(true);
-      pendingModalOverlay.classList.add('active');
-    }
-
-    function closePendingModal() {
-      isPendingModalOpen = false;
-      document.body.classList.remove('modal-open');
-      pendingModalOverlay.classList.remove('active');
-    }
-
-    function handleOverlayClick(e, type) {
-      if (type === 'chat' && e.target === chatModalOverlay) closeChat();
-      if (type === 'pending' && e.target === pendingModalOverlay) closePendingModal();
-    }
-
-    function updateBadge() {
-      if (unreadCount > 0) {
-        chatBadgeEl.textContent = unreadCount > 99 ? '99+' : unreadCount;
-        chatBadgeEl.style.display = 'block';
-      } else {
-        chatBadgeEl.style.display = 'none';
-      }
-    }
-
-    function scrollChatToBottom() {
-      setTimeout(() => {
-        chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
-      }, 50);
-    }
-
+    // ==========================================
+    // ЛОГИКА ОСП / ОСТАТОК / СБРОС
+    // ==========================================
     function updateTimerAndState() {
       if (!lastActivityTimestamp) return;
-
-      const currentServerTime = Date.now() + serverTimeOffset;
-      const elapsed = currentServerTime - lastActivityTimestamp;
+      const elapsed = (Date.now() + serverTimeOffset) - lastActivityTimestamp;
       const remaining = TIMEOUT_MS - elapsed;
 
       if (remaining <= 0) {
         resetBtn.textContent = "Сбросить всё пароль (00) [00:00]";
-        
-        if (!wasExpiredState) {
-          wasExpiredState = true;
-          renderGrid();
-          renderPendingGrid();
-        }
       } else {
-        if (wasExpiredState) {
-          wasExpiredState = false;
-          renderGrid();
-          renderPendingGrid();
-        }
-        
-        const totalSeconds = Math.floor(remaining / 1000);
-        const mins = Math.floor(totalSeconds / 60);
-        const secs = totalSeconds % 60;
-        const timeStr = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-        resetBtn.textContent = `Сбросить всё пароль (00) [${timeStr}]`;
+        const totalSecs = Math.floor(remaining / 1000);
+        const mins = String(Math.floor(totalSecs / 60)).padStart(2, '0');
+        const secs = String(totalSecs % 60).padStart(2, '0');
+        resetBtn.textContent = `Сбросить всё пароль (00) [${mins}:${secs}]`;
       }
     }
-
     setInterval(updateTimerAndState, 1000);
 
     function renderGrid() {
@@ -1333,24 +1043,13 @@
       const filterValue = searchInput.value.trim();
 
       clearSearchBtn.style.display = filterValue ? 'block' : 'none';
-      let renderedCardsCount = 0;
 
-      const currentServerTime = Date.now() + serverTimeOffset;
-      const isExpired = lastActivityTimestamp && ((currentServerTime - lastActivityTimestamp) >= TIMEOUT_MS);
-
-      BRANCH_NUMBERS.forEach((branchNum) => {
-        const numStr = branchNum.toString();
-        
-        const rawStatus = !!branchStatus[numStr];
-        const isClosed = isExpired ? false : rawStatus;
-        
+      BRANCH_NUMBERS.forEach(num => {
+        const numStr = num.toString();
+        const isClosed = !!branchStatus[numStr];
         if (isClosed) closedCount++;
 
-        if (filterValue !== '' && numStr !== filterValue) {
-          return;
-        }
-
-        renderedCardsCount++;
+        if (filterValue !== '' && numStr !== filterValue) return;
 
         const card = document.createElement('div');
         card.className = `card ${isClosed ? 'is-closed' : ''}`;
@@ -1369,114 +1068,129 @@
         gridEl.appendChild(card);
       });
 
-      if (renderedCardsCount === 0) {
-        gridEl.innerHTML = '<div class="no-results">Отделение не найдено</div>';
-      }
-
-      if (closedCount === BRANCH_NUMBERS.length && !isExpired) {
-        if (!hasPlayedSoundThisCycle) {
-          playSuccessSound();
-          hasPlayedSoundThisCycle = true;
-        }
-      } else {
-        hasPlayedSoundThisCycle = false;
-      }
-
       counterEl.textContent = `${closedCount} / ${BRANCH_NUMBERS.length}`;
     }
 
-    function renderPendingGrid(forceFullRebuild = false) {
-      const currentServerTime = Date.now() + serverTimeOffset;
-      const isExpired = lastActivityTimestamp && ((currentServerTime - lastActivityTimestamp) >= TIMEOUT_MS);
-
-      const pendingNumbers = BRANCH_NUMBERS.filter(num => {
-        const isClosed = isExpired ? false : !!branchStatus[num.toString()];
-        return !isClosed;
-      });
-
-      if (pendingNumbers.length === 0) {
-        pendingGridEl.innerHTML = '<div class="pending-empty">🎉 Все отделения успешно закрыты!</div>';
-        return;
-      }
-
-      if (forceFullRebuild || pendingGridEl.querySelector('.pending-empty')) {
-        pendingGridEl.innerHTML = '';
-        pendingNumbers.forEach(num => {
-          const badge = document.createElement('div');
-          badge.className = 'pending-badge';
-          badge.dataset.num = num;
-          badge.textContent = `№${num}`;
-          pendingGridEl.appendChild(badge);
-        });
-      } else {
-        const existingBadges = pendingGridEl.querySelectorAll('.pending-badge');
-        existingBadges.forEach(badge => {
-          const num = parseInt(badge.dataset.num, 10);
-          if (!pendingNumbers.includes(num) && !badge.classList.contains('fade-out')) {
-            badge.classList.add('fade-out');
-            setTimeout(() => {
-              badge.remove();
-              if (pendingGridEl.children.length === 0) {
-                pendingGridEl.innerHTML = '<div class="pending-empty">🎉 Все отделения успешно закрыты!</div>';
-              }
-            }, 300);
-          }
-        });
-
-        pendingNumbers.forEach(num => {
-          let badge = pendingGridEl.querySelector(`[data-num="${num}"]`);
-          if (!badge) {
-            badge = document.createElement('div');
-            badge.className = 'pending-badge';
-            badge.dataset.num = num;
-            badge.textContent = `№${num}`;
-            pendingGridEl.appendChild(badge);
-          }
-        });
-      }
-    }
-
-    function toggleBranch(branchNumStr) {
-      const currentServerTime = Date.now() + serverTimeOffset;
-      const isExpired = lastActivityTimestamp && ((currentServerTime - lastActivityTimestamp) >= TIMEOUT_MS);
-
-      if (isExpired) {
-        const newMap = {};
-        BRANCH_NUMBERS.forEach(num => newMap[num.toString()] = false);
-        newMap[branchNumStr] = true;
-
-        branchesRef.set(newMap);
-      } else {
-        const newStatus = !branchStatus[branchNumStr];
-        db.ref(`history/${selectedDate}/branches_map/${branchNumStr}`).set(newStatus);
-      }
-
+    function toggleBranch(numStr) {
+      const newStatus = !branchStatus[numStr];
+      db.ref(`history/${selectedDate}/branches_map/${numStr}`).set(newStatus);
       lastActivityRef.set(firebase.database.ServerValue.TIMESTAMP);
     }
 
-    searchInput.addEventListener('input', (e) => {
-      const val = e.target.value.trim();
-      localStorage.setItem(STORAGE_KEY_FILTER, val);
-      renderGrid();
-    });
+    function renderPendingGrid() {
+      const pendingGrid = document.getElementById('pendingGrid');
+      pendingGrid.innerHTML = '';
+      const pending = BRANCH_NUMBERS.filter(num => !branchStatus[num.toString()]);
 
-    function clearSearch() {
-      searchInput.value = '';
-      localStorage.removeItem(STORAGE_KEY_FILTER);
-      renderGrid();
+      if (pending.length === 0) {
+        pendingGrid.innerHTML = '<div class="pending-empty">🎉 Все отделения успешно закрыты!</div>';
+        return;
+      }
+
+      pending.forEach(num => {
+        const badge = document.createElement('div');
+        badge.className = 'pending-badge';
+        badge.textContent = `№${num}`;
+        pendingGrid.appendChild(badge);
+      });
     }
 
     function resetAll() {
-      const pass = prompt('Введите пароль для сброса:');
-      if (pass === '00') {
+      if (prompt('Введите пароль для сброса:') === '00') {
         const resetState = {};
         BRANCH_NUMBERS.forEach(num => resetState[num] = false);
         branchesRef.set(resetState);
         lastActivityRef.set(firebase.database.ServerValue.TIMESTAMP);
-      } else if (pass !== null) {
-        alert('Неверный пароль!');
       }
     }
+
+    // ==========================================
+    // ЛОГИКА ЧАТА И СТИКЕРОВ
+    // ==========================================
+    function initStickers() {
+      const grid = document.getElementById('stickerGrid');
+      grid.innerHTML = '';
+      TELEGRAM_STICKERS.forEach(url => {
+        const item = document.createElement('div');
+        item.className = 'sticker-item';
+        const img = document.createElement('img');
+        img.src = url;
+        item.appendChild(img);
+        item.onclick = () => sendSticker(url);
+        grid.appendChild(item);
+      });
+    }
+    initStickers();
+
+    function toggleStickerPicker() {
+      document.getElementById('stickerPicker').classList.toggle('active');
+    }
+
+    function sendSticker(url) {
+      chatRef.push({ stickerUrl: url, isSticker: true, senderId: myUserId, color: myUserColor, timestamp: firebase.database.ServerValue.TIMESTAMP });
+      document.getElementById('stickerPicker').classList.remove('active');
+    }
+
+    chatRef.limitToLast(50).on('value', snap => {
+      const data = snap.val();
+      const container = document.getElementById('chatMessages');
+      container.innerHTML = '';
+      if (data) {
+        Object.values(data).forEach(msg => {
+          const isMine = msg.senderId === myUserId;
+          const msgDiv = document.createElement('div');
+          msgDiv.className = `chat-message ${msg.isSticker ? 'is-sticker' : ''} ${isMine ? 'my-message' : ''}`;
+          
+          const meta = `<div class="message-meta"><span class="message-sender" style="color:${isMine ? '#93c5fd' : (msg.color||'#38bdf8')}">${isMine?'Вы':msg.senderId}</span></div>`;
+          const content = msg.isSticker ? `<img class="tg-sticker-img" src="${msg.stickerUrl}">` : `<div class="message-text">${msg.text}</div>`;
+
+          msgDiv.innerHTML = meta + content;
+          container.appendChild(msgDiv);
+        });
+        if (isChatOpen) container.scrollTop = container.scrollHeight;
+      }
+    });
+
+    function sendMessage(e) {
+      e.preventDefault();
+      const input = document.getElementById('chatInput');
+      const val = input.value.trim();
+      if (!val) return;
+      chatRef.push({ text: val, senderId: myUserId, color: myUserColor, timestamp: firebase.database.ServerValue.TIMESTAMP });
+      input.value = '';
+    }
+
+    function openChat() {
+      isChatOpen = true;
+      document.body.classList.add('modal-open');
+      document.getElementById('chatModalOverlay').classList.add('active');
+    }
+
+    function closeChat() {
+      isChatOpen = false;
+      document.body.classList.remove('modal-open');
+      document.getElementById('chatModalOverlay').classList.remove('active');
+    }
+
+    function openPendingModal() {
+      document.body.classList.add('modal-open');
+      document.getElementById('pendingModalOverlay').classList.add('active');
+    }
+
+    function closePendingModal() {
+      document.body.classList.remove('modal-open');
+      document.getElementById('pendingModalOverlay').classList.remove('active');
+    }
+
+    function handleOverlayClick(e, type) {
+      if (type === 'chat' && e.target === document.getElementById('chatModalOverlay')) closeChat();
+      if (type === 'pending' && e.target === document.getElementById('pendingModalOverlay')) closePendingModal();
+      if (type === 'schedule' && e.target === document.getElementById('scheduleModalOverlay')) closeScheduleModal();
+      if (type === 'shift' && e.target === document.getElementById('shiftModalOverlay')) closeShiftModal();
+    }
+
+    searchInput.addEventListener('input', renderGrid);
+    function clearSearch() { searchInput.value = ''; renderGrid(); }
   </script>
 </body>
 </html>
