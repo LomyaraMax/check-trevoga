@@ -60,12 +60,10 @@
       --input-border: #cbd5e1;
       --input-text: #0f172a;
       
-      /* Светлый неактивный тачик */
       --status-btn-bg: #f1f5f9;
       --status-btn-text: #64748b;
       --status-btn-border: #cbd5e1;
       
-      /* Сочный активный тачик */
       --status-btn-active-bg: linear-gradient(135deg, #4ade80, #22c55e);
       --status-btn-active-text: #ffffff;
       --status-btn-active-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);
@@ -132,7 +130,24 @@
     .header-controls {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
+    }
+
+    /* Календарь в хэдере */
+    .date-picker-input {
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      color: var(--input-text);
+      padding: 6px 8px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      outline: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .date-picker-input:focus {
+      border-color: #38bdf8;
     }
 
     .theme-toggle-btn {
@@ -148,6 +163,7 @@
       cursor: pointer;
       transition: all 0.2s ease;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      flex-shrink: 0;
     }
 
     .theme-toggle-btn:hover {
@@ -168,6 +184,7 @@
       position: relative;
       transition: all 0.2s ease;
       box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+      flex-shrink: 0;
     }
 
     .chat-trigger-btn:hover {
@@ -193,13 +210,14 @@
       background: rgba(56, 189, 248, 0.12);
       color: #0284c7;
       border: 1px solid rgba(56, 189, 248, 0.4);
-      padding: 6px 14px;
+      padding: 6px 10px;
       border-radius: 20px;
       font-weight: 700;
-      font-size: 0.95rem;
+      font-size: 0.85rem;
       cursor: pointer;
       user-select: none;
       transition: all 0.2s ease;
+      white-space: nowrap;
     }
 
     [data-theme="dark"] .counter {
@@ -288,9 +306,6 @@
       letter-spacing: 0.3px;
     }
 
-    /* ==========================================
-       СТИЛИ ТАЧИКА / КНОПКИ СТАТУСА
-       ========================================== */
     .status-btn {
       background-color: var(--status-btn-bg);
       color: var(--status-btn-text);
@@ -471,9 +486,7 @@
       font-size: 1.1rem;
     }
 
-    /* ==========================================
-       СТИЛИ ЧАТА (АДАПТИВНЫ ПОД ТЕМУ)
-       ========================================== */
+    /* ЧАТ */
     .chat-modal {
       height: 85vh;
       max-height: 650px;
@@ -728,6 +741,9 @@
   <div class="header">
     <div class="title">КЗ</div>
     <div class="header-controls">
+      <!-- Календарь выбора даты -->
+      <input type="date" id="datePicker" class="date-picker-input" onchange="handleDateChange(this.value)">
+
       <!-- Переключатель темы -->
       <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Сменить тему">
         <svg id="sunIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -846,7 +862,7 @@
     applyTheme(savedTheme);
 
     // ==========================================
-    // ЛОГИКА ПРИЛОЖЕНИЯ
+    // ЛОГИКА ПРИЛОЖЕНИЯ И КАЛЕНДАРЯ
     // ==========================================
     const BRANCH_NUMBERS = [
       51, 37, 57, 7, 124, 148, 88, 127, 119, 68, 
@@ -918,9 +934,20 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    
-    const branchesRef = db.ref('branches_map_v3');
-    const lastActivityRef = db.ref('last_activity_v3');
+
+    function getFormattedToday() {
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    }
+
+    let selectedDate = getFormattedToday();
+    document.getElementById('datePicker').value = selectedDate;
+
+    let branchesRef = null;
+    let lastActivityRef = null;
     const chatRef = db.ref('chat_messages_v1');
 
     let serverTimeOffset = 0;
@@ -973,6 +1000,44 @@
 
     const pendingModalOverlay = document.getElementById('pendingModalOverlay');
     const pendingGridEl = document.getElementById('pendingGrid');
+
+    function bindFirebaseDateListeners(dateStr) {
+      if (branchesRef) branchesRef.off();
+      if (lastActivityRef) lastActivityRef.off();
+
+      branchesRef = db.ref(`history/${dateStr}/branches_map`);
+      lastActivityRef = db.ref(`history/${dateStr}/last_activity`);
+
+      lastActivityRef.on('value', (snapshot) => {
+        const val = snapshot.val();
+        lastActivityTimestamp = val || null;
+        updateTimerAndState();
+      });
+
+      branchesRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (!data) {
+          branchesRef.set(INITIAL_STATUSES);
+          lastActivityRef.set(firebase.database.ServerValue.TIMESTAMP);
+        } else {
+          branchStatus = data;
+          renderGrid();
+          renderPendingGrid();
+          updateTimerAndState();
+        }
+      }, (error) => {
+        console.error("Ошибка чтения Firebase:", error);
+        gridEl.innerHTML = '<div class="no-results">Ошибка подключения к базе данных!</div>';
+      });
+    }
+
+    function handleDateChange(newDate) {
+      if (!newDate) return;
+      selectedDate = newDate;
+      bindFirebaseDateListeners(selectedDate);
+    }
+
+    bindFirebaseDateListeners(selectedDate);
 
     function initStickers() {
       if (!stickerGridEl) return;
@@ -1064,30 +1129,6 @@
     }
 
     searchInput.value = savedFilter;
-
-    lastActivityRef.on('value', (snapshot) => {
-      const val = snapshot.val();
-      if (val) {
-        lastActivityTimestamp = val;
-        updateTimerAndState();
-      }
-    });
-
-    branchesRef.on('value', (snapshot) => {
-      const data = snapshot.val();
-      if (!data) {
-        branchesRef.set(INITIAL_STATUSES);
-        lastActivityRef.set(firebase.database.ServerValue.TIMESTAMP);
-      } else {
-        branchStatus = data;
-        renderGrid();
-        renderPendingGrid();
-        updateTimerAndState();
-      }
-    }, (error) => {
-      console.error("Ошибка чтения Firebase:", error);
-      gridEl.innerHTML = '<div class="no-results">Ошибка подключения к базе данных!</div>';
-    });
 
     chatRef.limitToLast(50).on('value', (snapshot) => {
       const data = snapshot.val();
@@ -1381,7 +1422,7 @@
         branchesRef.set(newMap);
       } else {
         const newStatus = !branchStatus[branchNumStr];
-        db.ref(`branches_map_v3/${branchNumStr}`).set(newStatus);
+        db.ref(`history/${selectedDate}/branches_map/${branchNumStr}`).set(newStatus);
       }
 
       lastActivityRef.set(firebase.database.ServerValue.TIMESTAMP);
