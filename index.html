@@ -10,6 +10,13 @@
   <meta http-equiv="Expires" content="0">
 
   <title>Отчет по закрытию отделений</title>
+
+  <!-- Подключение Flatpickr CSS & JS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css" id="flatpickrTheme">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ru.js"></script>
+
   <style>
     /* ==========================================
        ПЕРЕМЕННЫЕ ТЕМ ОФОРМЛЕНИЯ
@@ -138,11 +145,13 @@
       background: var(--input-bg);
       border: 1px solid var(--input-border);
       color: var(--input-text);
-      padding: 6px 8px;
+      padding: 6px 10px;
       border-radius: 8px;
-      font-size: 0.82rem;
+      font-size: 0.85rem;
       outline: none;
       cursor: pointer;
+      width: 110px;
+      text-align: center;
       transition: all 0.2s ease;
     }
 
@@ -741,8 +750,8 @@
   <div class="header">
     <div class="title">КЗ</div>
     <div class="header-controls">
-      <!-- Календарь выбора даты -->
-      <input type="date" id="datePicker" class="date-picker-input" onchange="handleDateChange(this.value)">
+      <!-- Календарь выбора даты (Flatpickr) -->
+      <input type="text" id="datePicker" class="date-picker-input" placeholder="Выберите дату" readonly>
 
       <!-- Переключатель темы -->
       <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Сменить тему">
@@ -834,11 +843,12 @@
 
   <script>
     // ==========================================
-    // ЛОГИКА ТЕМЫ
+    // ЛОГИКА ТЕМЫ И Flatpickr
     // ==========================================
     const STORAGE_KEY_THEME = 'app_theme';
     const sunIcon = document.getElementById('sunIcon');
     const moonIcon = document.getElementById('moonIcon');
+    const flatpickrThemeLink = document.getElementById('flatpickrTheme');
 
     function applyTheme(theme) {
       document.documentElement.setAttribute('data-theme', theme);
@@ -846,9 +856,11 @@
       if (theme === 'light') {
         sunIcon.style.display = 'none';
         moonIcon.style.display = 'block';
+        flatpickrThemeLink.href = "https://npmcdn.com/flatpickr/dist/themes/material_blue.css";
       } else {
         sunIcon.style.display = 'block';
         moonIcon.style.display = 'none';
+        flatpickrThemeLink.href = "https://npmcdn.com/flatpickr/dist/themes/dark.css";
       }
     }
 
@@ -944,7 +956,21 @@
     }
 
     let selectedDate = getFormattedToday();
-    document.getElementById('datePicker').value = selectedDate;
+
+    // Инициализация Flatpickr
+    const fp = flatpickr("#datePicker", {
+      locale: "ru",
+      dateFormat: "Y-m-d",
+      altInput: true,
+      altFormat: "d.m.Y",
+      defaultDate: selectedDate,
+      disableMobile: true,
+      onChange: function(selectedDates, dateStr) {
+        if (dateStr) {
+          handleDateChange(dateStr);
+        }
+      }
+    });
 
     let branchesRef = null;
     let lastActivityRef = null;
