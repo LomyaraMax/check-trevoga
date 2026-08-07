@@ -11,6 +11,78 @@
 
   <title>Отчет по закрытию отделений</title>
   <style>
+    /* ==========================================
+       ПЕРЕМЕННЫЕ ТЕМ ОФОРМЛЕНИЯ
+       ========================================== */
+    :root {
+      --bg-color: #0f172a;
+      --text-color: #f8fafc;
+      --header-bg: linear-gradient(135deg, #0f172a, #1e293b);
+      --header-border: #334155;
+      --card-bg: linear-gradient(135deg, #1e293b, #0f172a);
+      --card-border: #334155;
+      --card-hover-border: #475569;
+      --card-closed-bg: linear-gradient(135deg, #064e3b, #0f172a);
+      --card-closed-border: rgba(34, 197, 94, 0.4);
+      --input-bg: #1e293b;
+      --input-border: #334155;
+      --input-text: #f8fafc;
+      --status-btn-bg: rgba(51, 65, 85, 0.6);
+      --status-btn-text: #94a3b8;
+      --status-btn-border: #334155;
+      --status-btn-active-bg: linear-gradient(135deg, #22c55e, #16a34a);
+      --status-btn-active-text: #ffffff;
+      --status-btn-active-shadow: 0 0 14px rgba(34, 197, 94, 0.4);
+      --modal-bg: #0f172a;
+      --modal-border: #334155;
+      --modal-overlay: rgba(15, 23, 42, 0.8);
+      --badge-bg: #0f172a;
+      --badge-border: #334155;
+      --theme-btn-bg: #1e293b;
+      --theme-btn-border: #334155;
+      --theme-btn-color: #fbbf24;
+      --chat-msg-other-bg: #1e293b;
+      --chat-msg-other-border: rgba(255, 255, 255, 0.08);
+      --chat-msg-text: #f8fafc;
+    }
+
+    [data-theme="light"] {
+      --bg-color: #f8fafc;
+      --text-color: #0f172a;
+      --header-bg: #ffffff;
+      --header-border: #e2e8f0;
+      --card-bg: #ffffff;
+      --card-border: #e2e8f0;
+      --card-hover-border: #cbd5e1;
+      --card-closed-bg: #f0fdf4;
+      --card-closed-border: #86efac;
+      --input-bg: #ffffff;
+      --input-border: #cbd5e1;
+      --input-text: #0f172a;
+      
+      /* Светлый неактивный тачик */
+      --status-btn-bg: #f1f5f9;
+      --status-btn-text: #64748b;
+      --status-btn-border: #cbd5e1;
+      
+      /* Сочный активный тачик */
+      --status-btn-active-bg: linear-gradient(135deg, #4ade80, #22c55e);
+      --status-btn-active-text: #ffffff;
+      --status-btn-active-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);
+      
+      --modal-bg: #ffffff;
+      --modal-border: #e2e8f0;
+      --modal-overlay: rgba(15, 23, 42, 0.3);
+      --badge-bg: #ffffff;
+      --badge-border: #e2e8f0;
+      --theme-btn-bg: #f1f5f9;
+      --theme-btn-border: #cbd5e1;
+      --theme-btn-color: #4f46e5;
+      --chat-msg-other-bg: #f1f5f9;
+      --chat-msg-other-border: #e2e8f0;
+      --chat-msg-text: #0f172a;
+    }
+
     * {
       box-sizing: border-box;
       margin: 0;
@@ -19,25 +91,25 @@
     }
 
     body {
-      background-color: #0f172a;
-      color: #f8fafc;
+      background-color: var(--bg-color);
+      color: var(--text-color);
       padding: 16px;
       display: flex;
       flex-direction: column;
       align-items: center;
       min-height: 100vh;
+      transition: background-color 0.3s ease, color 0.3s ease;
     }
 
-    /* БЛОКИРОВКА СКРОЛЛА ЗАДНЕГО ПЛАНА ПРИ ОТКРЫТОЙ МОДАЛКЕ */
     body.modal-open {
       overflow: hidden !important;
       touch-action: none;
     }
 
     .header {
-      background: linear-gradient(135deg, #0f172a, #1e293b);
-      border: 1px solid #334155;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      background: var(--header-bg);
+      border: 1px solid var(--header-border);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
       width: 100%;
       max-width: 500px;
       position: sticky;
@@ -49,6 +121,7 @@
       justify-content: space-between;
       align-items: center;
       z-index: 10;
+      transition: all 0.3s ease;
     }
 
     .title {
@@ -59,7 +132,26 @@
     .header-controls {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
+    }
+
+    .theme-toggle-btn {
+      background: var(--theme-btn-bg);
+      border: 1px solid var(--theme-btn-border);
+      color: var(--theme-btn-color);
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .theme-toggle-btn:hover {
+      transform: scale(1.08);
     }
 
     .chat-trigger-btn {
@@ -81,7 +173,6 @@
     .chat-trigger-btn:hover {
       background: linear-gradient(135deg, #4f46e5, #7c3aed);
       transform: scale(1.08);
-      box-shadow: 0 4px 16px rgba(139, 92, 246, 0.6);
     }
 
     .chat-badge {
@@ -95,13 +186,13 @@
       border-radius: 10px;
       padding: 2px 6px;
       display: none;
-      border: 2px solid #1e293b;
+      border: 2px solid var(--modal-bg);
     }
 
     .counter {
       background: rgba(56, 189, 248, 0.12);
-      color: #38bdf8;
-      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: #0284c7;
+      border: 1px solid rgba(56, 189, 248, 0.4);
       padding: 6px 14px;
       border-radius: 20px;
       font-weight: 700;
@@ -111,11 +202,15 @@
       transition: all 0.2s ease;
     }
 
+    [data-theme="dark"] .counter {
+      color: #38bdf8;
+      border-color: rgba(56, 189, 248, 0.3);
+    }
+
     .counter:hover {
       background: #0284c7;
       color: #ffffff;
       border-color: #38bdf8;
-      box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
     }
 
     .search-container {
@@ -127,14 +222,14 @@
 
     .search-input {
       width: 100%;
-      background-color: #1e293b;
-      border: 1px solid #334155;
-      color: #f8fafc;
+      background-color: var(--input-bg);
+      border: 1px solid var(--input-border);
+      color: var(--input-text);
       padding: 12px 40px 12px 16px;
       border-radius: 10px;
       font-size: 1rem;
       outline: none;
-      transition: border-color 0.2s;
+      transition: border-color 0.2s, background-color 0.3s ease;
     }
 
     .search-input:focus {
@@ -165,45 +260,41 @@
     }
 
     .card {
-      background: linear-gradient(135deg, #1e293b, #0f172a);
-      border: 1px solid #334155;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
       border-radius: 12px;
       padding: 12px 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
     }
 
     .card:hover {
-      border-color: #475569;
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+      border-color: var(--card-hover-border);
+      transform: translateY(-1px);
     }
 
     .card.is-closed {
-      border-color: rgba(34, 197, 94, 0.4);
-      background: linear-gradient(135deg, #064e3b, #0f172a);
-      box-shadow: 0 4px 16px rgba(34, 197, 94, 0.15);
-    }
-
-    .card.is-closed:hover {
-      border-color: #22c55e;
-      box-shadow: 0 6px 20px rgba(34, 197, 94, 0.25);
+      border-color: var(--card-closed-border);
+      background: var(--card-closed-bg);
     }
 
     .branch-name {
       font-weight: 600;
       font-size: 1rem;
-      color: #f1f5f9;
+      color: var(--text-color);
       letter-spacing: 0.3px;
     }
 
+    /* ==========================================
+       СТИЛИ ТАЧИКА / КНОПКИ СТАТУСА
+       ========================================== */
     .status-btn {
-      background-color: rgba(51, 65, 85, 0.6);
-      color: #94a3b8;
-      border: 1px solid #334155;
+      background-color: var(--status-btn-bg);
+      color: var(--status-btn-text);
+      border: 1px solid var(--status-btn-border);
       padding: 10px 16px;
       border-radius: 8px;
       font-weight: 600;
@@ -213,25 +304,23 @@
       transition: all 0.2s ease;
       min-width: 115px;
       text-align: center;
+      touch-action: manipulation;
     }
 
     .status-btn:hover {
-      background-color: #334155;
-      color: #f8fafc;
-      border-color: #475569;
+      filter: brightness(0.95);
     }
 
     .status-btn.active {
-      background: linear-gradient(135deg, #22c55e, #16a34a);
-      color: #052e16;
+      background: var(--status-btn-active-bg);
+      color: var(--status-btn-active-text);
       border-color: #22c55e;
       font-weight: 700;
-      box-shadow: 0 0 14px rgba(34, 197, 94, 0.5);
+      box-shadow: var(--status-btn-active-shadow);
     }
 
     .status-btn.active:hover {
-      background: linear-gradient(135deg, #4ade80, #22c55e);
-      box-shadow: 0 0 18px rgba(34, 197, 94, 0.7);
+      filter: brightness(1.05);
       transform: scale(1.02);
     }
 
@@ -254,7 +343,7 @@
     }
 
     .reset-btn {
-      background-color: #0f172a;
+      background-color: var(--bg-color);
       color: #ef4444;
       border: 1px solid #ef4444;
       padding: 10px 20px;
@@ -276,7 +365,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(15, 23, 42, 0.8);
+      background: var(--modal-overlay);
       backdrop-filter: blur(4px);
       display: flex;
       justify-content: center;
@@ -295,21 +384,22 @@
     }
 
     .modal-card {
-      border: 1px solid #334155;
+      border: 1px solid var(--modal-border);
       border-radius: 16px;
       width: 100%;
       max-width: 480px;
       display: flex;
       flex-direction: column;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
       overflow: hidden;
-      background-color: #0f172a;
+      background-color: var(--modal-bg);
+      color: var(--text-color);
     }
 
     .modal-header {
-      padding: 10px 14px;
-      background-color: #0f172a;
-      border-bottom: 1px solid #334155;
+      padding: 12px 16px;
+      background-color: var(--header-bg);
+      border-bottom: 1px solid var(--modal-border);
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -334,7 +424,7 @@
     }
 
     .modal-close-btn:hover {
-      color: #f8fafc;
+      color: var(--text-color);
     }
 
     .pending-body {
@@ -351,9 +441,9 @@
     }
 
     .pending-badge {
-      background-color: #0f172a;
-      border: 1px solid #334155;
-      color: #38bdf8;
+      background-color: var(--badge-bg);
+      border: 1px solid var(--badge-border);
+      color: #0284c7;
       font-weight: 700;
       font-size: 1.05rem;
       padding: 12px 8px;
@@ -362,6 +452,10 @@
       transition: all 0.3s ease;
       opacity: 1;
       transform: scale(1);
+    }
+
+    [data-theme="dark"] .pending-badge {
+      color: #38bdf8;
     }
 
     .pending-badge.fade-out {
@@ -378,31 +472,24 @@
     }
 
     /* ==========================================
-       СТИЛЬНЫЙ И СОВРЕМЕННЫЙ АНОНИМНЫЙ ЧАТ (UI V2)
+       СТИЛИ ЧАТА (АДАПТИВНЫ ПОД ТЕМУ)
        ========================================== */
     .chat-modal {
       height: 85vh;
       max-height: 650px;
-      background: rgba(15, 23, 42, 0.95) !important;
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.1) !important;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(99, 102, 241, 0.15) !important;
+      background: var(--modal-bg);
+      border: 1px solid var(--modal-border);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+      color: var(--text-color);
     }
 
     .chat-modal .modal-header {
-      background: rgba(30, 41, 59, 0.6);
-      backdrop-filter: blur(8px);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: var(--header-bg);
+      border-bottom: 1px solid var(--modal-border);
       padding: 14px 18px;
+      color: var(--text-color);
     }
 
-    .chat-modal .modal-header-title {
-      font-size: 1.05rem;
-      letter-spacing: 0.3px;
-    }
-
-    /* Кастомный красивый скроллбар */
     .chat-messages::-webkit-scrollbar,
     .sticker-picker::-webkit-scrollbar {
       width: 5px;
@@ -413,12 +500,8 @@
     }
     .chat-messages::-webkit-scrollbar-thumb,
     .sticker-picker::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.15);
+      background: var(--status-btn-border);
       border-radius: 10px;
-    }
-    .chat-messages::-webkit-scrollbar-thumb:hover,
-    .sticker-picker::-webkit-scrollbar-thumb:hover {
-      background: rgba(56, 189, 248, 0.4);
     }
 
     .chat-messages {
@@ -428,30 +511,29 @@
       display: flex;
       flex-direction: column;
       gap: 10px;
-      background: radial-gradient(circle at center, rgba(30, 41, 59, 0.3) 0%, rgba(15, 23, 42, 0.8) 100%);
+      background: var(--bg-color);
       overscroll-behavior: contain;
     }
 
-    /* Бабблы сообщений */
     .chat-message {
       position: relative;
-      background: #1e293b;
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: var(--chat-msg-other-bg);
+      border: 1px solid var(--chat-msg-other-border);
       padding: 10px 14px;
       border-radius: 16px 16px 16px 4px;
       max-width: 80%;
       word-wrap: break-word;
       align-self: flex-start;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
       animation: msgPop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
     .chat-message.my-message {
       align-self: flex-end;
       background: linear-gradient(135deg, #3b82f6, #2563eb);
-      border-color: rgba(255, 255, 255, 0.15);
+      border: none;
       border-radius: 16px 16px 4px 16px;
-      box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+      box-shadow: 0 4px 15px rgba(37, 99, 235, 0.25);
     }
 
     @keyframes msgPop {
@@ -478,34 +560,36 @@
     }
 
     .message-time {
-      color: rgba(255, 255, 255, 0.45);
+      color: var(--status-btn-text);
       font-size: 0.68rem;
     }
 
     .chat-message.my-message .message-time {
-      color: rgba(255, 255, 255, 0.7);
+      color: rgba(255, 255, 255, 0.8);
     }
 
     .message-text {
       font-size: 0.95rem;
       line-height: 1.4;
-      color: #f8fafc;
+      color: var(--chat-msg-text);
     }
 
-    /* Панель ввода */
+    .chat-message.my-message .message-text {
+      color: #ffffff;
+    }
+
     .chat-input-area {
       padding: 10px 14px;
-      background: rgba(30, 41, 59, 0.7);
-      backdrop-filter: blur(8px);
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      background: var(--header-bg);
+      border-top: 1px solid var(--modal-border);
       display: flex;
       align-items: center;
       gap: 10px;
     }
 
     .sticker-toggle-btn {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: var(--status-btn-bg);
+      border: 1px solid var(--status-btn-border);
       font-size: 1.2rem;
       cursor: pointer;
       width: 40px;
@@ -518,15 +602,14 @@
     }
 
     .sticker-toggle-btn:hover {
-      background: rgba(255, 255, 255, 0.15);
       transform: scale(1.05);
     }
 
     .chat-input {
       flex: 1;
-      background: rgba(15, 23, 42, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      color: #f8fafc;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      color: var(--input-text);
       padding: 10px 16px;
       border-radius: 12px;
       font-size: 0.95rem;
@@ -537,8 +620,6 @@
 
     .chat-input:focus {
       border-color: #38bdf8;
-      background: rgba(15, 23, 42, 0.9);
-      box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
     }
 
     .chat-send-btn {
@@ -558,14 +639,11 @@
 
     .chat-send-btn:hover {
       transform: scale(1.05);
-      box-shadow: 0 4px 18px rgba(56, 189, 248, 0.5);
-      background: linear-gradient(135deg, #7dd3fc, #0284c7);
     }
 
-    /* Панель выбора стикеров */
     .sticker-picker {
-      background: rgba(15, 23, 42, 0.95);
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      background: var(--modal-bg);
+      border-top: 1px solid var(--modal-border);
       padding: 12px 14px;
       display: none;
       flex-direction: column;
@@ -573,7 +651,6 @@
       max-height: 260px;
       overflow-y: auto;
       overscroll-behavior: contain;
-      backdrop-filter: blur(10px);
     }
 
     .sticker-picker.active {
@@ -582,14 +659,14 @@
 
     .sticker-picker-title {
       font-size: 0.72rem;
-      color: #94a3b8;
+      color: var(--status-btn-text);
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.8px;
     }
 
     .sticker-grid {
-    display: flex;
+      display: flex;
       flex-wrap: wrap;
       justify-content: space-between;
       gap: 8px;
@@ -601,8 +678,8 @@
       justify-content: center;
       cursor: pointer;
       padding: 8px;
-      background: rgba(30, 41, 59, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.05);
+      background: var(--status-btn-bg);
+      border: 1px solid var(--status-btn-border);
       border-radius: 12px;
       transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
@@ -610,8 +687,6 @@
     .sticker-item:hover {
       transform: translateY(-3px) scale(1.15);
       border-color: #38bdf8;
-      background: rgba(56, 189, 248, 0.15);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
 
     .sticker-item img {
@@ -620,7 +695,6 @@
       object-fit: contain;
     }
 
-    /* Оформление стикеров в чате */
     .chat-message.is-sticker {
       background: transparent !important;
       border: none !important;
@@ -637,7 +711,7 @@
       height: 110px;
       object-fit: contain;
       display: block;
-      filter: drop-shadow(0 6px 12px rgba(0,0,0,0.5));
+      filter: drop-shadow(0 6px 12px rgba(0,0,0,0.2));
       transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
@@ -654,6 +728,24 @@
   <div class="header">
     <div class="title">Контроль закрытия</div>
     <div class="header-controls">
+      <!-- Переключатель темы -->
+      <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Сменить тему">
+        <svg id="sunIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg id="moonIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </button>
+
       <button class="chat-trigger-btn" id="openChatBtn" onclick="openChat()" title="Открыть анонимный чат">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -680,7 +772,7 @@
     <button class="reset-btn" id="resetBtn" onclick="resetAll()">Сбросить всё пароль (00) [00:30]</button>
   </div>
 
-  <!-- Модальное окно чата -->
+  <!-- Модалка чата -->
   <div class="modal-overlay" id="chatModalOverlay" onclick="handleOverlayClick(event, 'chat')">
     <div class="modal-card chat-modal">
       <div class="modal-header">
@@ -691,7 +783,6 @@
       </div>
       <div class="chat-messages" id="chatMessages"></div>
 
-      <!-- Всплывающая панель стикеров -->
       <div class="sticker-picker" id="stickerPicker">
         <div class="sticker-picker-title">Стикеры</div>
         <div class="sticker-grid" id="stickerGrid"></div>
@@ -710,7 +801,7 @@
     </div>
   </div>
 
-  <!-- Модальное окно непроголосовавших отделений -->
+  <!-- Модалка списка остатка -->
   <div class="modal-overlay" id="pendingModalOverlay" onclick="handleOverlayClick(event, 'pending')">
     <div class="modal-card">
       <div class="modal-header">
@@ -726,6 +817,37 @@
   </div>
 
   <script>
+    // ==========================================
+    // ЛОГИКА ТЕМЫ
+    // ==========================================
+    const STORAGE_KEY_THEME = 'app_theme';
+    const sunIcon = document.getElementById('sunIcon');
+    const moonIcon = document.getElementById('moonIcon');
+
+    function applyTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem(STORAGE_KEY_THEME, theme);
+      if (theme === 'light') {
+        sunIcon.style.display = 'none';
+        moonIcon.style.display = 'block';
+      } else {
+        sunIcon.style.display = 'block';
+        moonIcon.style.display = 'none';
+      }
+    }
+
+    function toggleTheme() {
+      const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      applyTheme(newTheme);
+    }
+
+    const savedTheme = localStorage.getItem(STORAGE_KEY_THEME) || 'dark';
+    applyTheme(savedTheme);
+
+    // ==========================================
+    // ЛОГИКА ПРИЛОЖЕНИЯ
+    // ==========================================
     const BRANCH_NUMBERS = [
       51, 37, 57, 7, 124, 148, 88, 127, 119, 68, 
       163, 76, 95, 98, 96, 122, 50, 53, 17, 110
@@ -740,9 +862,7 @@
 
     const TIMEOUT_MS = 12 * 60 * 1000; 
 
-    // 40 СМЕШНЫХ И ВЫРАЗИТЕЛЬНЫХ СТИКЕРОВ В TELEGRAM-СТИЛЕ
     const TELEGRAM_STICKERS = [
-      // Мемы, Котэ и Эмоции
       "https://em-content.zobj.net/source/telegram/386/clown-face_1f921.webp",
       "https://em-content.zobj.net/source/telegram/386/cat-with-tears-of-joy_1f639.webp",
       "https://em-content.zobj.net/source/telegram/386/crying-cat_1f63f.webp",
@@ -751,8 +871,6 @@
       "https://em-content.zobj.net/source/telegram/386/grinning-cat-with-smiling-eyes_1f638.webp",
       "https://em-content.zobj.net/source/telegram/386/smiling-cat-with-heart-eyes_1f63b.webp",
       "https://em-content.zobj.net/source/telegram/386/cat-with-wry-smile_1f63c.webp",
-
-      // Выразительные Лица
       "https://em-content.zobj.net/source/telegram/386/face-with-tears-of-joy_1f602.webp",
       "https://em-content.zobj.net/source/telegram/386/rolling-on-the-floor-laughing_1f923.webp",
       "https://em-content.zobj.net/source/telegram/386/exploding-head_1f92f.webp",
@@ -768,8 +886,6 @@
       "https://em-content.zobj.net/source/telegram/386/face-holding-back-tears_1e9e9.webp",
       "https://em-content.zobj.net/source/telegram/386/face-screaming-in-fear_1f631.webp",
       "https://em-content.zobj.net/source/telegram/386/flushed-face_1f633.webp",
-
-      // Жесты и Лайки
       "https://em-content.zobj.net/source/telegram/386/thumbs-up_1f44d.webp",
       "https://em-content.zobj.net/source/telegram/386/facepalm_1f926.webp",
       "https://em-content.zobj.net/source/telegram/386/pinched-fingers_1f90c.webp",
@@ -778,8 +894,6 @@
       "https://em-content.zobj.net/source/telegram/386/middle-finger_1f595.webp",
       "https://em-content.zobj.net/source/telegram/386/clapping-hands_1f44f.webp",
       "https://em-content.zobj.net/source/telegram/386/folded-hands_1f64f.webp",
-
-      // Работа, Доставка, Огонь
       "https://em-content.zobj.net/source/telegram/386/fire_1f525.webp",
       "https://em-content.zobj.net/source/telegram/386/package_1f4e6.webp",
       "https://em-content.zobj.net/source/telegram/386/delivery-truck_1f69a.webp",
@@ -1299,4 +1413,3 @@
   </script>
 </body>
 </html>
-
