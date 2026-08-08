@@ -646,7 +646,51 @@
     <div class="title">КЗ</div>
     <div class="header-controls">
       <!-- Иконка Календаря графика с паролем -->
-      <button class="icon-trigger-btn" onclick="openScheduleModal()" title="График работы (Пароль)">📅</button>
+      <button class="icon-trigger-btn" onclick="openScheduleModal()" title="График работы (Пароль)"><svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Градиент для шапки -->
+    <linearGradient id="calHeaderGrad" x1="8" y1="12" x2="56" y2="28" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#2563EB"/>
+    </linearGradient>
+
+    <!-- Градиент для тела -->
+    <linearGradient id="calBodyGrad" x1="8" y1="26" x2="56" y2="54" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1E293B"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
+
+    <!-- Тень под иконкой -->
+    <filter id="shadow" x="2" y="8" width="60" height="52" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="6" stdDeviation="4" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#shadow)">
+    <!-- Подложка / Тело календаря -->
+    <rect x="8" y="24" width="48" height="30" rx="10" fill="url(#calBodyGrad)" stroke="#334155" stroke-width="1.5"/>
+
+    <!-- Верхняя шапка -->
+    <path d="M8 22C8 16.4772 12.4772 12 18 12H46C51.5228 12 56 16.4772 56 22V26H8V22Z" fill="url(#calHeaderGrad)"/>
+
+    <!-- Пружины / Крепления -->
+    <rect x="18" y="8" width="4" height="8" rx="2" fill="#93C5FD"/>
+    <rect x="42" y="8" width="4" height="8" rx="2" fill="#93C5FD"/>
+
+    <!-- Дни (сетка точек) -->
+    <circle cx="18" cy="33" r="2.2" fill="#64748B"/>
+    <circle cx="27" cy="33" r="2.2" fill="#64748B"/>
+    <circle cx="36" cy="33" r="2.2" fill="#64748B"/>
+    <circle cx="45" cy="33" r="2.2" fill="#64748B"/>
+
+    <circle cx="18" cy="42" r="2.2" fill="#64748B"/>
+    <!-- Выделенный активный день -->
+    <rect x="23" y="38" width="8" height="8" rx="3" fill="#EF4444"/>
+    <circle cx="36" cy="42" r="2.2" fill="#64748B"/>
+    <circle cx="45" cy="42" r="2.2" fill="#64748B"/>
+  </g>
+</svg>
+</button>
 
       <!-- Переключатель темы -->
       <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Сменить тему">
@@ -683,7 +727,7 @@
   <div class="modal-overlay" id="scheduleModalOverlay" onclick="handleOverlayClick(event, 'schedule')">
     <div class="modal-card">
       <div class="modal-header">
-        <div class="modal-header-title"><span>📅 График работы сотрудника</span></div>
+        <div class="modal-header-title"><span>График работы</span></div>
         <button class="modal-close-btn" onclick="closeScheduleModal()">✕</button>
       </div>
       <div class="calendar-modal-body">
