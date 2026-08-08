@@ -646,51 +646,40 @@
     <div class="title">КЗ</div>
     <div class="header-controls">
       <!-- Иконка Календаря графика с паролем -->
-      <button class="icon-trigger-btn" onclick="openScheduleModal()" title="График работы (Пароль)"><svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <!-- Градиент для шапки -->
-    <linearGradient id="calHeaderGrad" x1="8" y1="12" x2="56" y2="28" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#3B82F6"/>
-      <stop offset="100%" stop-color="#2563EB"/>
-    </linearGradient>
+      <button class="icon-trigger-btn" onclick="openScheduleModal()" title="График работы (Пароль)">
+        <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="calHeaderGrad" x1="8" y1="12" x2="56" y2="28" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#3B82F6"/>
+              <stop offset="100%" stop-color="#2563EB"/>
+            </linearGradient>
 
-    <!-- Градиент для тела -->
-    <linearGradient id="calBodyGrad" x1="8" y1="26" x2="56" y2="54" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#1E293B"/>
-      <stop offset="100%" stop-color="#0F172A"/>
-    </linearGradient>
+            <linearGradient id="calBodyGrad" x1="8" y1="26" x2="56" y2="54" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#1E293B"/>
+              <stop offset="100%" stop-color="#0F172A"/>
+            </linearGradient>
 
-    <!-- Тень под иконкой -->
-    <filter id="shadow" x="2" y="8" width="60" height="52" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-      <feDropShadow dx="0" dy="6" stdDeviation="4" flood-color="#000000" flood-opacity="0.35"/>
-    </filter>
-  </defs>
+            <filter id="shadow" x="2" y="8" width="60" height="52" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+              <feDropShadow dx="0" dy="6" stdDeviation="4" flood-color="#000000" flood-opacity="0.35"/>
+            </filter>
+          </defs>
 
-  <g filter="url(#shadow)">
-    <!-- Подложка / Тело календаря -->
-    <rect x="8" y="24" width="48" height="30" rx="10" fill="url(#calBodyGrad)" stroke="#334155" stroke-width="1.5"/>
-
-    <!-- Верхняя шапка -->
-    <path d="M8 22C8 16.4772 12.4772 12 18 12H46C51.5228 12 56 16.4772 56 22V26H8V22Z" fill="url(#calHeaderGrad)"/>
-
-    <!-- Пружины / Крепления -->
-    <rect x="18" y="8" width="4" height="8" rx="2" fill="#93C5FD"/>
-    <rect x="42" y="8" width="4" height="8" rx="2" fill="#93C5FD"/>
-
-    <!-- Дни (сетка точек) -->
-    <circle cx="18" cy="33" r="2.2" fill="#64748B"/>
-    <circle cx="27" cy="33" r="2.2" fill="#64748B"/>
-    <circle cx="36" cy="33" r="2.2" fill="#64748B"/>
-    <circle cx="45" cy="33" r="2.2" fill="#64748B"/>
-
-    <circle cx="18" cy="42" r="2.2" fill="#64748B"/>
-    <!-- Выделенный активный день -->
-    <rect x="23" y="38" width="8" height="8" rx="3" fill="#EF4444"/>
-    <circle cx="36" cy="42" r="2.2" fill="#64748B"/>
-    <circle cx="45" cy="42" r="2.2" fill="#64748B"/>
-  </g>
-</svg>
-</button>
+          <g filter="url(#shadow)">
+            <rect x="8" y="24" width="48" height="30" rx="10" fill="url(#calBodyGrad)" stroke="#334155" stroke-width="1.5"/>
+            <path d="M8 22C8 16.4772 12.4772 12 18 12H46C51.5228 12 56 16.4772 56 22V26H8V22Z" fill="url(#calHeaderGrad)"/>
+            <rect x="18" y="8" width="4" height="8" rx="2" fill="#93C5FD"/>
+            <rect x="42" y="8" width="4" height="8" rx="2" fill="#93C5FD"/>
+            <circle cx="18" cy="33" r="2.2" fill="#64748B"/>
+            <circle cx="27" cy="33" r="2.2" fill="#64748B"/>
+            <circle cx="36" cy="33" r="2.2" fill="#64748B"/>
+            <circle cx="45" cy="33" r="2.2" fill="#64748B"/>
+            <circle cx="18" cy="42" r="2.2" fill="#64748B"/>
+            <rect x="23" y="38" width="8" height="8" rx="3" fill="#EF4444"/>
+            <circle cx="36" cy="42" r="2.2" fill="#64748B"/>
+            <circle cx="45" cy="42" r="2.2" fill="#64748B"/>
+          </g>
+        </svg>
+      </button>
 
       <!-- Переключатель темы -->
       <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Сменить тему">
@@ -890,6 +879,7 @@
     let branchStatus = { ...INITIAL_STATUSES };
     let lastActivityTimestamp = null;
     let isChatOpen = false, unreadCount = 0, isInitialChatLoad = true;
+    let isResetting = false;
 
     const gridEl = document.getElementById('branchesGrid');
     const counterEl = document.getElementById('counter');
@@ -1063,15 +1053,30 @@
     }
 
     // ==========================================
-    // ЛОГИКА ОСП / ОСТАТОК / СБРОС
+    // ЛОГИКА ОСП / ОСТАТОК / СБРОС (АВТОМАТИЧЕСКАЯ СИНХРОНИЗАЦИЯ)
     // ==========================================
     function updateTimerAndState() {
       if (!lastActivityTimestamp) return;
-      const elapsed = (Date.now() + serverTimeOffset) - lastActivityTimestamp;
+
+      const currentServerTime = Date.now() + serverTimeOffset;
+      const elapsed = currentServerTime - lastActivityTimestamp;
       const remaining = TIMEOUT_MS - elapsed;
 
       if (remaining <= 0) {
         resetBtn.textContent = "Сбросить всё пароль (00) [00:00]";
+
+        // Проверяем, есть ли закрытые отделения
+        const hasClosedBranches = Object.values(branchStatus).some(val => val === true);
+        
+        // Если время истекло и есть закрытые отделения — выполняем автосброс в Firebase
+        if (hasClosedBranches && !isResetting && branchesRef) {
+          isResetting = true;
+          branchesRef.set(INITIAL_STATUSES).then(() => {
+            return lastActivityRef.set(firebase.database.ServerValue.TIMESTAMP);
+          }).finally(() => {
+            isResetting = false;
+          });
+        }
       } else {
         const totalSecs = Math.floor(remaining / 1000);
         const mins = String(Math.floor(totalSecs / 60)).padStart(2, '0');
