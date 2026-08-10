@@ -694,7 +694,7 @@
   <div class="grid" id="branchesGrid"></div>
 
   <div class="footer">
-    <button class="reset-btn" id="resetBtn" onclick="resetAll()">Сбросить всё [12:00]</button>
+    <button class="reset-btn" id="resetBtn" onclick="resetAll()">Сбросить всё</button>
   </div>
 
   <!-- Модальное окно календаря -->
@@ -805,7 +805,7 @@
 
     const BRANCH_NUMBERS = [51, 37, 57, 7, 124, 148, 88, 127, 119, 68, 163, 76, 95, 98, 96, 122, 50, 53, 17, 110];
     const INITIAL_STATUSES = {"51":false,"37":false,"57":false,"7":false,"124":false,"148":false,"88":false,"127":false,"119":false,"68":false,"163":false,"76":false,"95":false,"98":false,"96":false,"122":false,"50":false,"53":false,"17":false,"110":false};
-    const TIMEOUT_MS = 12 * 60 * 1000;
+    const APP_VERSION = '1.0.1';
 
     const TELEGRAM_STICKERS = [
       "https://em-content.zobj.net/source/telegram/386/clown-face_1f921.webp",
@@ -831,6 +831,68 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    function versionToNumbers(version) {
+      return String(version || '0')
+        .split('.')
+        .map(part => parseInt(part, 10) || 0);
+    }
+
+    function isRemoteVersionNewer(remoteVersion) {
+      const remote = versionToNumbers(remoteVersion);
+      const local = versionToNumbers(APP_VERSION);
+      const length = Math.max(remote.length, local.length);
+
+      for (let i = 0; i < length; i++) {
+        const r = remote[i] || 0;
+        const l = local[i] || 0;
+        if (r > l) return true;
+        if (r < l) return false;
+      }
+
+      return false;
+    }
+
+    let versionCheckInProgress = false;
+
+    async function checkAppVersion() {
+      if (versionCheckInProgress) return;
+      versionCheckInProgress = true;
+
+      try {
+        const snapshot = await db.ref('app_version').once('value');
+        const remoteVersion = snapshot.val();
+
+        if (remoteVersion && isRemoteVersionNewer(remoteVersion)) {
+          const url = new URL(window.location.href);
+          url.searchParams.set('v', `${remoteVersion}-${Date.now()}`);
+          window.location.replace(url.toString());
+          return;
+        }
+      } catch (error) {
+        console.warn('Не удалось проверить версию приложения:', error);
+      } finally {
+        versionCheckInProgress = false;
+      }
+    }
+
+    function refreshPageState() {
+      if (branchesRef) branchesRef.once('value');
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        checkAppVersion();
+        refreshPageState();
+      }
+    });
+
+    window.addEventListener('pageshow', () => {
+      checkAppVersion();
+      refreshPageState();
+    });
+
+    checkAppVersion();
+
     function getFormattedToday() {
       const today = new Date();
       const yyyy = today.getFullYear();
@@ -839,167 +901,113 @@
       return `${yyyy}-${mm}-${dd}`;
     }
 
-    let selectedDate = getFormattedToday();
-    let branchesRef = null;
-    let lastActivityRef = null;
+    let branchesRef = db.ref('branches_status');
     const chatRef = db.ref('chat_messages_v1');
-
-    let serverTimeOffset = 0;
-    db.ref('.info/serverTimeOffset').on('value', snap => serverTimeOffset = snap.val() || 0);
 
     let myUserId = localStorage.getItem('chat_user_id') || ('Аноним #' + Math.floor(100 + Math.random() * 900));
     localStorage.setItem('chat_user_id', myUserId);
 
-    let myUserColor = localStorage.getItem('chat_user_color') || ['#38bdf8', '#4ade80', '#f43f5e', '#fbbf24', '#c084fc'][Math.floor(Math.random()*5)];
+    let myUserColor = localStorage.getItem('chat_user_color') || ('#' + Math.floor(Math.random()*16777215).toString(16));
     localStorage.setItem('chat_user_color', myUserColor);
 
-    let branchStatus = { ...INITIAL_STATUSES };
-    let lastActivityTimestamp = null;
-    let isChatOpen = false, unreadCount = 0, isInitialChatLoad = true;
+    let currentStatuses = { ...INITIAL_STATUSES };
 
-    const gridEl = document.getElementById('branchesGrid');
-    const counterEl = document.getElementById('counter');
-    const searchInput = document.getElementById('searchInput');
-    const clearSearchBtn = document.getElementById('clearSearchBtn');
-    const resetBtn = document.getElementById('resetBtn');
+    branchesRef.on('value', (snapshot) => {
+      const val = snapshot.val();
+      if (val) {
+        currentStatuses = { ...INITIAL_STATUSES, ...val };
+      } else {
+        currentStatuses = { ...INITIAL_STATUSES };
+      }
+      renderGrid();
+      updateCounter();
+    });
 
-    function bindFirebaseDateListeners(dateStr) {
-      if (branchesRef) branchesRef.off();
-      if (lastActivityRef) lastActivityRef.off();
+    function renderGrid() {
+      const grid = document.getElementById('branchesGrid');
+      const query = document.getElementById('searchInput').value.trim();
+      grid.innerHTML = '';
 
-      branchesRef = db.ref(`history/${dateStr}/branches_map`);
-      lastActivityRef = db.ref(`history/${dateStr}/last_activity`);
+      let filtered = BRANCH_NUMBERS;
+      if (query) {
+        filtered = BRANCH_NUMBERS.filter(num => String(num).includes(query));
+      }
 
-      branchesRef.on('value', snapshot => {
-        const data = snapshot.val();
-        if (data) {
-          branchStatus = { ...INITIAL_STATUSES, ...data };
-        } else {
-          branchStatus = { ...INITIAL_STATUSES };
-        }
-        render();
-      });
-
-      lastActivityRef.on('value', snapshot => {
-        lastActivityTimestamp = snapshot.val();
-        updateTimerAndState();
-      });
-    }
-
-    bindFirebaseDateListeners(selectedDate);
-
-    // ==========================================
-    // ИСПРАВЛЕННЫЙ ТАЙМЕР (ЧИСТО ВИЗУАЛЬНЫЙ)
-    // ==========================================
-    function updateTimerAndState() {
-      if (!lastActivityTimestamp) {
-        resetBtn.textContent = "Сбросить всё [12:00]";
+      if (filtered.length === 0) {
+        grid.innerHTML = '<div class="no-results">Отделение не найдено</div>';
         return;
       }
 
-      const currentServerTime = Date.now() + serverTimeOffset;
-      const elapsed = currentServerTime - lastActivityTimestamp;
-      const remaining = TIMEOUT_MS - elapsed;
-
-      if (remaining <= 0) {
-        resetBtn.textContent = "Сбросить всё [00:00]";
-      } else {
-        const totalSecs = Math.floor(remaining / 1000);
-        const mins = String(Math.floor(totalSecs / 60)).padStart(2, '0');
-        const secs = String(totalSecs % 60).padStart(2, '0');
-        resetBtn.textContent = `Сбросить всё [${mins}:${secs}]`;
-      }
-    }
-
-    setInterval(updateTimerAndState, 1000);
-
-    function toggleBranch(numStr) {
-      const newStatus = !branchStatus[numStr];
-      
-      const updates = {};
-      updates[`history/${selectedDate}/branches_map/${numStr}`] = newStatus;
-      updates[`history/${selectedDate}/last_activity`] = firebase.database.ServerValue.TIMESTAMP;
-
-      db.ref().update(updates);
-    }
-
-    // ==========================================
-    // РУЧНОЙ СБРОС (СТРОГО ПО ПАРОЛЮ)
-    // ==========================================
-    function resetAll() {
-      if (prompt('Введите пароль для сброса:') === '163') {
-        const updates = {};
-        BRANCH_NUMBERS.forEach(num => {
-          updates[`history/${selectedDate}/branches_map/${num}`] = false;
-        });
-        updates[`history/${selectedDate}/last_activity`] = firebase.database.ServerValue.TIMESTAMP;
-
-        db.ref().update(updates);
-      }
-    }
-
-    function render() {
-      const query = searchInput.value.trim().toLowerCase();
-      gridEl.innerHTML = '';
-
-      let closedCount = 0;
-      let visibleCount = 0;
-
-      BRANCH_NUMBERS.forEach(num => {
-        const numStr = String(num);
-        const isClosed = branchStatus[numStr] || false;
-
-        if (isClosed) closedCount++;
-
-        if (query === '' || numStr.includes(query)) {
-          visibleCount++;
-          const card = document.createElement('div');
-          card.className = `card ${isClosed ? 'is-closed' : ''}`;
-
-          const nameEl = document.createElement('div');
-          nameEl.className = 'branch-name';
-          nameEl.textContent = `Отделение №${numStr}`;
-
-          const btn = document.createElement('button');
-          btn.className = `status-btn ${isClosed ? 'active' : ''}`;
-          btn.textContent = isClosed ? 'Закрыто' : 'Открыто';
-          btn.onclick = () => toggleBranch(numStr);
-
-          card.appendChild(nameEl);
-          card.appendChild(btn);
-          gridEl.appendChild(card);
-        }
+      filtered.forEach(num => {
+        const isClosed = !!currentStatuses[num];
+        const card = document.createElement('div');
+        card.className = `card ${isClosed ? 'is-closed' : ''}`;
+        card.innerHTML = `
+          <span class="branch-name">Отделение №${num}</span>
+          <button class="status-btn ${isClosed ? 'active' : ''}" onclick="toggleBranch(${num})">
+            ${isClosed ? 'ЗАКРЫТО' : 'ОТКРЫТО'}
+          </button>
+        `;
+        grid.appendChild(card);
       });
-
-      if (visibleCount === 0) {
-        gridEl.innerHTML = '<div class="no-results">Отделение не найдено</div>';
-      }
-
-      counterEl.textContent = `${closedCount} / ${BRANCH_NUMBERS.length}`;
-      clearSearchBtn.style.display = query.length > 0 ? 'block' : 'none';
     }
 
-    searchInput.addEventListener('input', render);
+    function toggleBranch(num) {
+      const current = !!currentStatuses[num];
+      db.ref(`branches_status/${num}`).set(!current);
+    }
+
+    function updateCounter() {
+      const closedCount = Object.values(currentStatuses).filter(Boolean).length;
+      document.getElementById('counter').innerText = `${closedCount} / ${BRANCH_NUMBERS.length}`;
+    }
+
+    function resetAll() {
+      if (confirm('Вы уверены, что хотите сбросить статусы всех отделений?')) {
+        const resetObj = {};
+        BRANCH_NUMBERS.forEach(num => resetObj[num] = false);
+        branchesRef.set(resetObj);
+      }
+    }
+
+    // Поиск
+    const searchInput = document.getElementById('searchInput');
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+
+    searchInput.addEventListener('input', () => {
+      clearSearchBtn.style.display = searchInput.value ? 'block' : 'none';
+      renderGrid();
+    });
 
     function clearSearch() {
       searchInput.value = '';
-      render();
-      searchInput.focus();
+      clearSearchBtn.style.display = 'none';
+      renderGrid();
     }
 
+    // Модальные окна общие функции
+    function handleOverlayClick(event, type) {
+      if (event.target.classList.contains('modal-overlay')) {
+        if (type === 'schedule') closeScheduleModal();
+        if (type === 'shift') closeShiftModal();
+        if (type === 'chat') closeChat();
+        if (type === 'pending') closePendingModal();
+      }
+    }
+
+    // Незакрытые отделения
     function openPendingModal() {
       const grid = document.getElementById('pendingGrid');
       grid.innerHTML = '';
+      const pending = BRANCH_NUMBERS.filter(num => !currentStatuses[num]);
 
-      const pendingBranches = BRANCH_NUMBERS.filter(num => !branchStatus[String(num)]);
-
-      if (pendingBranches.length === 0) {
-        grid.innerHTML = '<div class="pending-empty" style="grid-column: 1/-1;">🎉 Все отделения успешно закрыты!</div>';
+      if (pending.length === 0) {
+        grid.innerHTML = '<div class="pending-empty">🎉 Все отделения закрыты!</div>';
       } else {
-        pendingBranches.forEach(num => {
+        pending.forEach(num => {
           const badge = document.createElement('div');
           badge.className = 'pending-badge';
-          badge.textContent = `№${num}`;
+          badge.innerText = `№${num}`;
           grid.appendChild(badge);
         });
       }
@@ -1013,9 +1021,9 @@
       document.body.classList.remove('modal-open');
     }
 
-    let calCurrentDate = new Date();
-    let selectedShiftDayKey = null;
-    let scheduleData = {};
+    // График / Календарь
+    let currentCalDate = new Date();
+    let selectedCalDay = null;
 
     function openScheduleModal() {
       document.getElementById('scheduleModalOverlay').classList.add('active');
@@ -1029,200 +1037,145 @@
 
     function verifyCalPass() {
       const pass = document.getElementById('calPassInput').value;
-      if (pass === '163') {
+      if (pass === '1234') {
         document.getElementById('calAuthBlock').style.display = 'none';
         document.getElementById('calContentBlock').style.display = 'flex';
-        initScheduleListener();
+        renderCalendar();
       } else {
         alert('Неверный пароль');
       }
     }
 
-    function initScheduleListener() {
-      db.ref('schedules').on('value', snapshot => {
-        scheduleData = snapshot.val() || {};
-        renderCalendar();
-      });
-    }
-
     function changeCalMonth(delta) {
-      calCurrentDate.setMonth(calCurrentDate.getMonth() + delta);
+      currentCalDate.setMonth(currentCalDate.getMonth() + delta);
       renderCalendar();
     }
 
     function renderCalendar() {
-      const year = calCurrentDate.getFullYear();
-      const month = calCurrentDate.getMonth();
-
-      const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
-      document.getElementById('calMonthTitle').textContent = `${monthNames[month]} ${year}`;
-
+      const monthTitle = document.getElementById('calMonthTitle');
       const grid = document.getElementById('calGrid');
       grid.innerHTML = '';
+
+      const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+      const y = currentCalDate.getFullYear();
+      const m = currentCalDate.getMonth();
+
+      monthTitle.innerText = `${monthNames[m]} ${y}`;
 
       const weekdays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
       weekdays.forEach(wd => {
         const el = document.createElement('div');
         el.className = 'cal-weekday';
-        el.textContent = wd;
+        el.innerText = wd;
         grid.appendChild(el);
       });
 
-      const firstDay = new Date(year, month, 1);
-      let startingDay = firstDay.getDay() - 1;
-      if (startingDay === -1) startingDay = 6;
+      const firstDayIndex = (new Date(y, m, 1).getDay() + 6) % 7;
+      const daysInMonth = new Date(y, m + 1, 0).getDate();
 
-      const totalDays = new Date(year, month + 1, 0).getDate();
-
-      for (let i = 0; i < startingDay; i++) {
+      for (let i = 0; i < firstDayIndex; i++) {
         const empty = document.createElement('div');
         empty.className = 'cal-day empty';
         grid.appendChild(empty);
       }
 
-      for (let day = 1; day <= totalDays; day++) {
-        const dayStr = String(day).padStart(2, '0');
-        const monthStr = String(month + 1).padStart(2, '0');
-        const dayKey = `${year}-${monthStr}-${dayStr}`;
+      const scheduleRef = db.ref(`schedule/${y}-${String(m + 1).padStart(2, '0')}`);
+      scheduleRef.once('value', snapshot => {
+        const monthData = snapshot.val() || {};
 
-        const shift = scheduleData[dayKey];
+        for (let d = 1; d <= daysInMonth; d++) {
+          const dayCell = document.createElement('div');
+          const dateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+          const shiftType = monthData[d];
 
-        const dayEl = document.createElement('div');
-        dayEl.className = 'cal-day';
+          let shiftClass = '';
+          let badgeText = '';
+          if (shiftType === '98') { shiftClass = 'st-98'; badgeText = '98'; }
+          else if (shiftType === '163') { shiftClass = 'st-163'; badgeText = '163'; }
+          else if (shiftType === 'vh') { shiftClass = 'st-vh'; badgeText = 'ВХ'; }
 
-        if (shift === '98') dayEl.classList.add('st-98');
-        if (shift === '163') dayEl.classList.add('st-163');
-        if (shift === 'vh') dayEl.classList.add('st-vh');
+          dayCell.className = `cal-day ${shiftClass}`;
+          dayCell.onclick = () => openShiftModal(d, dateStr);
 
-        const numEl = document.createElement('span');
-        numEl.className = 'cal-day-num';
-        numEl.textContent = day;
-
-        const badgeEl = document.createElement('span');
-        badgeEl.className = 'cal-day-badge';
-        if (shift === '98') badgeEl.textContent = '98';
-        if (shift === '163') badgeEl.textContent = '163';
-        if (shift === 'vh') badgeEl.textContent = 'ВХ';
-
-        dayEl.appendChild(numEl);
-        dayEl.appendChild(badgeEl);
-
-        dayEl.onclick = () => openShiftModal(dayKey, day, monthNames[month]);
-
-        grid.appendChild(dayEl);
-      }
+          dayCell.innerHTML = `
+            <span class="cal-day-num">${d}</span>
+            <span class="cal-day-badge">${badgeText}</span>
+          `;
+          grid.appendChild(dayCell);
+        }
+      });
     }
 
-    function openShiftModal(dayKey, day, monthName) {
-      selectedShiftDayKey = dayKey;
-      document.getElementById('shiftModalTitle').textContent = `${day} ${monthName}`;
+    function openShiftModal(day, dateStr) {
+      selectedCalDay = { day, dateStr };
+      document.getElementById('shiftModalTitle').innerText = `День ${day}`;
       document.getElementById('shiftModalOverlay').classList.add('active');
     }
 
-    function setShift(type) {
-      if (selectedShiftDayKey) {
-        if (type === null) {
-          db.ref(`schedules/${selectedShiftDayKey}`).remove();
-        } else {
-          db.ref(`schedules/${selectedShiftDayKey}`).set(type);
-        }
-      }
+    function closeShiftModal() {
       document.getElementById('shiftModalOverlay').classList.remove('active');
     }
 
+    function setShift(type) {
+      if (!selectedCalDay) return;
+      const [y, m, d] = selectedCalDay.dateStr.split('-');
+      const dayRef = db.ref(`schedule/${y}-${m}/${parseInt(d, 10)}`);
+
+      if (type === null) {
+        dayRef.remove();
+      } else {
+        dayRef.set(type);
+      }
+
+      closeShiftModal();
+      renderCalendar();
+    }
+
+    // Чат
     function openChat() {
-      isChatOpen = true;
-      unreadCount = 0;
-      document.getElementById('chatBadge').style.display = 'none';
       document.getElementById('chatModalOverlay').classList.add('active');
       document.body.classList.add('modal-open');
-      scrollChatToBottom();
+      renderStickers();
+      initChat();
     }
 
     function closeChat() {
-      isChatOpen = false;
       document.getElementById('chatModalOverlay').classList.remove('active');
       document.body.classList.remove('modal-open');
     }
 
-    function toggleStickerPicker() {
-      const picker = document.getElementById('stickerPicker');
-      picker.classList.toggle('active');
-    }
+    let chatInitialized = false;
+    function initChat() {
+      if (chatInitialized) return;
+      chatInitialized = true;
 
-    function initStickerPicker() {
-      const grid = document.getElementById('stickerGrid');
-      grid.innerHTML = '';
-      TELEGRAM_STICKERS.forEach(url => {
-        const item = document.createElement('div');
-        item.className = 'sticker-item';
-        const img = document.createElement('img');
-        img.src = url;
-        item.appendChild(img);
-        item.onclick = () => sendSticker(url);
-        grid.appendChild(item);
+      chatRef.limitToLast(50).on('child_added', snapshot => {
+        const msg = snapshot.val();
+        appendChatMessage(msg);
       });
     }
 
-    initStickerPicker();
-
-    chatRef.limitToLast(50).on('child_added', snapshot => {
-      const msg = snapshot.val();
-      renderChatMessage(msg);
-
-      if (!isInitialChatLoad && !isChatOpen) {
-        unreadCount++;
-        const badge = document.getElementById('chatBadge');
-        badge.textContent = unreadCount;
-        badge.style.display = 'block';
-      }
-    });
-
-    chatRef.once('value', () => {
-      isInitialChatLoad = false;
-      scrollChatToBottom();
-    });
-
-    function renderChatMessage(msg) {
+    function appendChatMessage(msg) {
       const container = document.getElementById('chatMessages');
-      const isMine = msg.senderId === myUserId;
+      const isMine = msg.userId === myUserId;
+      const messageDiv = document.createElement('div');
 
-      const msgEl = document.createElement('div');
-      msgEl.className = `chat-message ${isMine ? 'my-message' : ''}`;
-
-      if (msg.type === 'sticker') {
-        msgEl.classList.add('is-sticker');
-        const img = document.createElement('img');
-        img.className = 'tg-sticker-img';
-        img.src = msg.text;
-        msgEl.appendChild(img);
+      if (msg.isSticker) {
+        messageDiv.className = `chat-message is-sticker ${isMine ? 'my-message' : ''}`;
+        messageDiv.innerHTML = `<img class="tg-sticker-img" src="${msg.text}" alt="sticker">`;
       } else {
-        const metaEl = document.createElement('div');
-        metaEl.className = 'message-meta';
-
-        const senderEl = document.createElement('span');
-        senderEl.className = 'message-sender';
-        senderEl.style.color = msg.userColor || '#38bdf8';
-        senderEl.textContent = isMine ? 'Вы' : msg.senderId;
-
-        const timeEl = document.createElement('span');
-        timeEl.className = 'message-time';
-        const d = new Date(msg.timestamp);
-        timeEl.textContent = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-
-        metaEl.appendChild(senderEl);
-        metaEl.appendChild(timeEl);
-
-        const textEl = document.createElement('div');
-        textEl.className = 'message-text';
-        textEl.textContent = msg.text;
-
-        msgEl.appendChild(metaEl);
-        msgEl.appendChild(textEl);
+        messageDiv.className = `chat-message ${isMine ? 'my-message' : ''}`;
+        messageDiv.innerHTML = `
+          <div class="message-meta">
+            <span class="message-sender" style="color: ${msg.userColor || '#38bdf8'}">${msg.userName}</span>
+            <span class="message-time">${msg.time}</span>
+          </div>
+          <div class="message-text">${escapeHtml(msg.text)}</div>
+        `;
       }
 
-      container.appendChild(msgEl);
-      scrollChatToBottom();
+      container.appendChild(messageDiv);
+      container.scrollTop = container.scrollHeight;
     }
 
     function sendMessage(e) {
@@ -1231,42 +1184,52 @@
       const text = input.value.trim();
       if (!text) return;
 
+      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       chatRef.push({
-        senderId: myUserId,
+        userId: myUserId,
+        userName: myUserId,
         userColor: myUserColor,
         text: text,
-        type: 'text',
-        timestamp: firebase.database.ServerValue.TIMESTAMP
+        time: timeStr,
+        isSticker: false
       });
 
       input.value = '';
-      document.getElementById('stickerPicker').classList.remove('active');
     }
 
     function sendSticker(url) {
+      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       chatRef.push({
-        senderId: myUserId,
+        userId: myUserId,
+        userName: myUserId,
         userColor: myUserColor,
         text: url,
-        type: 'sticker',
-        timestamp: firebase.database.ServerValue.TIMESTAMP
+        time: timeStr,
+        isSticker: true
       });
-
-      document.getElementById('stickerPicker').classList.remove('active');
+      toggleStickerPicker();
     }
 
-    function scrollChatToBottom() {
-      const container = document.getElementById('chatMessages');
-      container.scrollTop = container.scrollHeight;
+    function toggleStickerPicker() {
+      const picker = document.getElementById('stickerPicker');
+      picker.classList.toggle('active');
     }
 
-    function handleOverlayClick(event, type) {
-      if (event.target.classList.contains('modal-overlay')) {
-        if (type === 'schedule') closeScheduleModal();
-        if (type === 'shift') document.getElementById('shiftModalOverlay').classList.remove('active');
-        if (type === 'chat') closeChat();
-        if (type === 'pending') closePendingModal();
-      }
+    function renderStickers() {
+      const grid = document.getElementById('stickerGrid');
+      if (grid.children.length > 0) return;
+
+      TELEGRAM_STICKERS.forEach(url => {
+        const item = document.createElement('div');
+        item.className = 'sticker-item';
+        item.onclick = () => sendSticker(url);
+        item.innerHTML = `<img src="${url}" alt="sticker">`;
+        grid.appendChild(item);
+      });
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
     }
   </script>
 </body>
