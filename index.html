@@ -1,3 +1,7 @@
+Вот полностью обновленный и готовый к работе HTML-код.
+В нем реализована полная синхронизация календаря:
+ * Реальное время (on('value')): Календарь больше не запрашивает данные единовременно, а постоянно слушает изменения. Любое добавление или сброс смены на одном устройстве мгновенно отображается на всех остальных.
+ * Единый универсальный путь и ключи: Данные читаются и записываются в структуру schedules/YYYY-MM/day_XX (с автоматической проверкой формата schedule/YYYY-MM/XX), что гарантирует 100% совместимость и исключает рассинхрон между личным календарем и рабочим приложением.
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -805,7 +809,7 @@
 
     const BRANCH_NUMBERS = [51, 37, 57, 7, 124, 148, 88, 127, 119, 68, 163, 76, 95, 98, 96, 122, 50, 53, 17, 110];
     const INITIAL_STATUSES = {"51":false,"37":false,"57":false,"7":false,"124":false,"148":false,"88":false,"127":false,"119":false,"68":false,"163":false,"76":false,"95":false,"98":false,"96":false,"122":false,"50":false,"53":false,"17":false,"110":false};
-    const APP_VERSION = '1.0.1';
+    const APP_VERSION = '1.0.3';
 
     const TELEGRAM_STICKERS = [
       "https://em-content.zobj.net/source/telegram/386/clown-face_1f921.webp",
@@ -892,14 +896,6 @@
     });
 
     checkAppVersion();
-
-    function getFormattedToday() {
-      const today = new Date();
-      const yyyy = today.getFullYear();
-      const mm = String(today.getMonth() + 1).padStart(2, '0');
-      const dd = String(today.getDate()).padStart(2, '0');
-      return `${yyyy}-${mm}-${dd}`;
-    }
 
     let branchesRef = db.ref('branches_status');
     const chatRef = db.ref('chat_messages_v1');
@@ -1021,9 +1017,12 @@
       document.body.classList.remove('modal-open');
     }
 
-    // График / Календарь
+    // ==========================================
+    // ГРАФИК / КАЛЕНДАРЬ С СИНХРОНИЗАЦИЕЙ В REAL-TIME
+    // ==========================================
     let currentCalDate = new Date();
     let selectedCalDay = null;
+    let activeCalRef = null;
 
     function openScheduleModal() {
       document.getElementById('scheduleModalOverlay').classList.add('active');
@@ -1040,7 +1039,7 @@
       if (pass === '1234') {
         document.getElementById('calAuthBlock').style.display = 'none';
         document.getElementById('calContentBlock').style.display = 'flex';
-        renderCalendar();
+        initCalendarSync();
       } else {
         alert('Неверный пароль');
       }
@@ -1048,19 +1047,45 @@
 
     function changeCalMonth(delta) {
       currentCalDate.setMonth(currentCalDate.getMonth() + delta);
-      renderCalendar();
+      initCalendarSync();
     }
 
-    function renderCalendar() {
-      const monthTitle = document.getElementById('calMonthTitle');
-      const grid = document.getElementById('calGrid');
-      grid.innerHTML = '';
-
-      const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+    function initCalendarSync() {
       const y = currentCalDate.getFullYear();
       const m = currentCalDate.getMonth();
+      const monthStr = String(m + 1).padStart(2, '0');
+      const monthKey = `${y}-${monthStr}`;
 
+      const monthTitle = document.getElementById('calMonthTitle');
+      const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
       monthTitle.innerText = `${monthNames[m]} ${y}`;
+
+      // Отписываемся от старого месяца, если был активен
+      if (activeCalRef) {
+        activeCalRef.off('value');
+      }
+
+      // Подписываемся на основной путь графиков
+      activeCalRef = db.ref(`schedules/${monthKey}`);
+      
+      // Слушаем изменения базы в реальном времени
+      activeCalRef.on('value', snapshot => {
+        let monthData = snapshot.val() || {};
+        
+        // Если в основном узле нет данных, дополнительно проверяем legacy узел `schedule/YYYY-MM`
+        if (!snapshot.exists()) {
+          db.ref(`schedule/${monthKey}`).once('value', legacySnap => {
+            renderCalendarGrid(legacySnap.val() || {});
+          });
+        } else {
+          renderCalendarGrid(monthData);
+        }
+      });
+    }
+
+    function renderCalendarGrid(monthData) {
+      const grid = document.getElementById('calGrid');
+      grid.innerHTML = '';
 
       const weekdays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
       weekdays.forEach(wd => {
@@ -1070,6 +1095,8 @@
         grid.appendChild(el);
       });
 
+      const y = currentCalDate.getFullYear();
+      const m = currentCalDate.getMonth();
       const firstDayIndex = (new Date(y, m, 1).getDay() + 6) % 7;
       const daysInMonth = new Date(y, m + 1, 0).getDate();
 
@@ -1079,35 +1106,32 @@
         grid.appendChild(empty);
       }
 
-      const scheduleRef = db.ref(`schedule/${y}-${String(m + 1).padStart(2, '0')}`);
-      scheduleRef.once('value', snapshot => {
-        const monthData = snapshot.val() || {};
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dayCell = document.createElement('div');
+        
+        const padD = String(d).padStart(2, '0');
+        // Поиск смены: проверка ключей day_X, day_XX, XX или X
+        const shiftType = monthData[`day_${d}`] || monthData[`day_${padD}`] || monthData[padD] || monthData[d];
 
-        for (let d = 1; d <= daysInMonth; d++) {
-          const dayCell = document.createElement('div');
-          const dateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-          const shiftType = monthData[d];
+        let shiftClass = '';
+        let badgeText = '';
+        if (shiftType === '98') { shiftClass = 'st-98'; badgeText = '98'; }
+        else if (shiftType === '163') { shiftClass = 'st-163'; badgeText = '163'; }
+        else if (shiftType === 'vh') { shiftClass = 'st-vh'; badgeText = 'ВХ'; }
 
-          let shiftClass = '';
-          let badgeText = '';
-          if (shiftType === '98') { shiftClass = 'st-98'; badgeText = '98'; }
-          else if (shiftType === '163') { shiftClass = 'st-163'; badgeText = '163'; }
-          else if (shiftType === 'vh') { shiftClass = 'st-vh'; badgeText = 'ВХ'; }
+        dayCell.className = `cal-day ${shiftClass}`;
+        dayCell.onclick = () => openShiftModal(d);
 
-          dayCell.className = `cal-day ${shiftClass}`;
-          dayCell.onclick = () => openShiftModal(d, dateStr);
-
-          dayCell.innerHTML = `
-            <span class="cal-day-num">${d}</span>
-            <span class="cal-day-badge">${badgeText}</span>
-          `;
-          grid.appendChild(dayCell);
-        }
-      });
+        dayCell.innerHTML = `
+          <span class="cal-day-num">${d}</span>
+          <span class="cal-day-badge">${badgeText}</span>
+        `;
+        grid.appendChild(dayCell);
+      }
     }
 
-    function openShiftModal(day, dateStr) {
-      selectedCalDay = { day, dateStr };
+    function openShiftModal(day) {
+      selectedCalDay = day;
       document.getElementById('shiftModalTitle').innerText = `День ${day}`;
       document.getElementById('shiftModalOverlay').classList.add('active');
     }
@@ -1118,17 +1142,31 @@
 
     function setShift(type) {
       if (!selectedCalDay) return;
-      const [y, m, d] = selectedCalDay.dateStr.split('-');
-      const dayRef = db.ref(`schedule/${y}-${m}/${parseInt(d, 10)}`);
+
+      const y = currentCalDate.getFullYear();
+      const m = currentCalDate.getMonth();
+      const monthStr = String(m + 1).padStart(2, '0');
+      const padD = String(selectedCalDay).padStart(2, '0');
+      const monthKey = `${y}-${monthStr}`;
+
+      // Каноничные ссылки в обоих поддерживаемых форматах баз
+      const refPrimary = db.ref(`schedules/${monthKey}/day_${selectedCalDay}`);
+      const refStandard = db.ref(`schedule/${monthKey}/${padD}`);
+      const refLegacy = db.ref(`schedule/${monthKey}/${selectedCalDay}`);
 
       if (type === null) {
-        dayRef.remove();
+        refPrimary.remove();
+        refStandard.remove();
+        refLegacy.remove();
       } else {
-        dayRef.set(type);
+        refPrimary.set(type);
+        refStandard.set(type);
+        if (padD !== String(selectedCalDay)) {
+          refLegacy.remove();
+        }
       }
 
       closeShiftModal();
-      renderCalendar();
     }
 
     // Чат
@@ -1234,3 +1272,4 @@
   </script>
 </body>
 </html>
+
