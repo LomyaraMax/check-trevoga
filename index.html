@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   
+  <!-- Мета-теги против кэширования старого кода браузером -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
@@ -696,6 +697,7 @@
     <button class="reset-btn" id="resetBtn" onclick="resetAll()">Сбросить всё [12:00]</button>
   </div>
 
+  <!-- Модальное окно календаря -->
   <div class="modal-overlay" id="scheduleModalOverlay" onclick="handleOverlayClick(event, 'schedule')">
     <div class="modal-card">
       <div class="modal-header">
@@ -730,6 +732,7 @@
     </div>
   </div>
 
+  <!-- Окно выбора смены -->
   <div class="modal-overlay" id="shiftModalOverlay" onclick="handleOverlayClick(event, 'shift')">
     <div class="shift-modal-card">
       <div style="font-weight: 700; text-align: center;" id="shiftModalTitle">Назначить смену</div>
@@ -740,6 +743,7 @@
     </div>
   </div>
 
+  <!-- Окно чата -->
   <div class="modal-overlay" id="chatModalOverlay" onclick="handleOverlayClick(event, 'chat')">
     <div class="modal-card chat-modal">
       <div class="modal-header">
@@ -764,6 +768,7 @@
     </div>
   </div>
 
+  <!-- Окно незакрытых отделений -->
   <div class="modal-overlay" id="pendingModalOverlay" onclick="handleOverlayClick(event, 'pending')">
     <div class="modal-card">
       <div class="modal-header">
@@ -884,7 +889,7 @@
     bindFirebaseDateListeners(selectedDate);
 
     // ==========================================
-    // ВИЗУАЛЬНЫЙ ТАЙМЕР (БЕЗ АВТОМАТИЧЕСКОГО СБРОСА В БД)
+    // ИСПРАВЛЕННЫЙ ТАЙМЕР (ЧИСТО ВИЗУАЛЬНЫЙ)
     // ==========================================
     function updateTimerAndState() {
       if (!lastActivityTimestamp) {
@@ -918,6 +923,9 @@
       db.ref().update(updates);
     }
 
+    // ==========================================
+    // РУЧНОЙ СБРОС (СТРОГО ПО ПАРОЛЮ)
+    // ==========================================
     function resetAll() {
       if (prompt('Введите пароль для сброса:') === '163') {
         const updates = {};
