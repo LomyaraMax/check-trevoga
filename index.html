@@ -1063,7 +1063,7 @@
       const remaining = TIMEOUT_MS - elapsed;
 
       if (remaining <= 0) {
-        resetBtn.textContent = "Сбросить всё пароль (00) [00:00]";
+        resetBtn.textContent = "Сбросить всё [00:00]";
 
         // Проверяем, есть ли закрытые отделения
         const hasClosedBranches = Object.values(branchStatus).some(val => val === true);
@@ -1081,7 +1081,7 @@
         const totalSecs = Math.floor(remaining / 1000);
         const mins = String(Math.floor(totalSecs / 60)).padStart(2, '0');
         const secs = String(totalSecs % 60).padStart(2, '0');
-        resetBtn.textContent = `Сбросить всё пароль (00) [${mins}:${secs}]`;
+        resetBtn.textContent = `Сбросить всё [${mins}:${secs}]`;
       }
     }
     setInterval(updateTimerAndState, 1000);
@@ -1145,7 +1145,7 @@
     }
 
     function resetAll() {
-      if (prompt('Введите пароль для сброса:') === '00') {
+      if (prompt('Введите пароль для сброса:') === '163') {
         const resetState = {};
         BRANCH_NUMBERS.forEach(num => resetState[num] = false);
         branchesRef.set(resetState);
