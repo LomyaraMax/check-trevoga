@@ -49,7 +49,6 @@
       --color-163-text: #ffffff;
       --color-vh-bg: #15803d;
       --color-vh-text: #ffffff;
-      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
 
     [data-theme="light"] {
@@ -92,71 +91,13 @@
       --color-163-text: #78350f;
       --color-vh-bg: #22c55e;
       --color-vh-text: #ffffff;
-      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    }
-
-    /* Третья тема: Ретро компьютерная графика (CRT / Retro PC) */
-    [data-theme="retro"] {
-      --bg-color: #050d08;
-      --text-color: #00ff66;
-      --header-bg: #0a1c10;
-      --header-border: #00ff66;
-      --card-bg: #09170e;
-      --card-border: #00aa44;
-      --card-hover-border: #00ff66;
-      --card-closed-bg: #002b11;
-      --card-closed-border: #00ff66;
-      --input-bg: #050d08;
-      --input-border: #00ff66;
-      --input-text: #00ff66;
-
-      --status-btn-bg: #0a1c10;
-      --status-btn-text: #00aa44;
-      --status-btn-border: #00aa44;
-
-      --status-btn-active-bg: #00ff66;
-      --status-btn-active-text: #050d08;
-      --status-btn-active-shadow: 0 0 12px rgba(0, 255, 102, 0.6);
-
-      --modal-bg: #0a1c10;
-      --modal-border: #00ff66;
-      --modal-overlay: rgba(0, 20, 5, 0.85);
-      --badge-bg: #0a1c10;
-      --badge-border: #00ff66;
-      --theme-btn-bg: #0a1c10;
-      --theme-btn-border: #00ff66;
-      --theme-btn-color: #00ff66;
-      --chat-msg-other-bg: #050d08;
-      --chat-msg-other-border: #00aa44;
-      --chat-msg-text: #00ff66;
-
-      --color-98-bg: #0055ff;
-      --color-98-text: #ffffff;
-      --color-163-bg: #ffaa00;
-      --color-163-text: #000000;
-      --color-vh-bg: #00aa44;
-      --color-vh-text: #ffffff;
-      --font-family: "Courier New", Courier, monospace;
-    }
-
-    /* Эффект CRT сканирующих строк для Ретро-темы */
-    [data-theme="retro"] body::after {
-      content: " ";
-      display: block;
-      position: fixed;
-      top: 0; left: 0; bottom: 0; right: 0;
-      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
-      background-size: 100% 4px;
-      z-index: 999;
-      pointer-events: none;
-      opacity: 0.6;
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: var(--font-family);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
 
     body {
@@ -245,20 +186,9 @@
       flex-shrink: 0;
     }
 
-    [data-theme="retro"] .chat-trigger-btn {
-      background: var(--theme-btn-bg);
-      border: 1px solid var(--theme-btn-border);
-      color: var(--text-color);
-      box-shadow: none;
-    }
-
     .chat-trigger-btn:hover {
       background: linear-gradient(135deg, #4f46e5, #7c3aed);
       transform: scale(1.08);
-    }
-
-    [data-theme="retro"] .chat-trigger-btn:hover {
-      background: var(--theme-btn-bg);
     }
 
     .chat-badge {
@@ -294,22 +224,10 @@
       border-color: rgba(56, 189, 248, 0.3);
     }
 
-    [data-theme="retro"] .counter {
-      background: var(--card-bg);
-      color: var(--text-color);
-      border-color: var(--card-border);
-      border-radius: 6px;
-    }
-
     .counter:hover {
       background: #0284c7;
       color: #ffffff;
       border-color: #38bdf8;
-    }
-
-    [data-theme="retro"] .counter:hover {
-      background: var(--text-color);
-      color: var(--bg-color);
     }
 
     .search-container {
@@ -335,10 +253,6 @@
       border-color: #38bdf8;
     }
 
-    [data-theme="retro"] .search-input:focus {
-      border-color: var(--text-color);
-    }
-
     .clear-search-btn {
       position: absolute;
       right: 12px;
@@ -351,10 +265,6 @@
       cursor: pointer;
       display: none;
       padding: 4px;
-    }
-
-    [data-theme="retro"] .clear-search-btn {
-      color: var(--text-color);
     }
 
     .grid {
@@ -423,10 +333,6 @@
       box-shadow: var(--status-btn-active-shadow);
     }
 
-    [data-theme="retro"] .status-btn.active {
-      border-color: var(--text-color);
-    }
-
     .status-btn.active:hover {
       filter: brightness(1.05);
       transform: scale(1.02);
@@ -437,10 +343,6 @@
       color: #94a3b8;
       padding: 20px;
       font-size: 0.95rem;
-    }
-
-    [data-theme="retro"] .no-results {
-      color: var(--text-color);
     }
 
     .footer {
@@ -464,11 +366,6 @@
       cursor: pointer;
       width: 100%;
       transition: background-color 0.2s ease;
-    }
-
-    [data-theme="retro"] .reset-btn {
-      color: var(--text-color);
-      border-color: var(--text-color);
     }
 
     .reset-btn:active {
@@ -536,10 +433,6 @@
       line-height: 1;
     }
 
-    [data-theme="retro"] .modal-close-btn {
-      color: var(--text-color);
-    }
-
     .calendar-modal-body {
       padding: 16px;
       display: flex;
@@ -576,12 +469,6 @@
       border-radius: 10px;
       font-weight: 700;
       cursor: pointer;
-    }
-
-    [data-theme="retro"] .pass-btn {
-      background: var(--status-btn-bg);
-      border: 1px solid var(--status-btn-border);
-      color: var(--text-color);
     }
 
     .calendar-nav {
@@ -631,10 +518,6 @@
       font-size: 0.72rem;
       font-weight: 700;
       color: #94a3b8;
-    }
-
-    [data-theme="retro"] .cal-weekday {
-      color: var(--text-color);
     }
 
     .cal-day {
@@ -692,10 +575,6 @@
     .opt-vh { background: var(--color-vh-bg); }
     .opt-reset { background: transparent; border: 1px solid var(--card-border); color: #ef4444; }
 
-    [data-theme="retro"] .opt-reset {
-      color: var(--text-color);
-    }
-
     .chat-modal {
       height: 85vh;
       max-height: 650px;
@@ -716,28 +595,18 @@
       align-self: flex-end; background: linear-gradient(135deg, #3b82f6, #2563eb); border: none; border-radius: 16px 16px 4px 16px;
     }
 
-    [data-theme="retro"] .chat-message.my-message {
-      background: var(--text-color);
-      color: var(--bg-color);
-      border: 1px solid var(--text-color);
-    }
-
     .message-meta { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 0.72rem; margin-bottom: 4px; }
     .message-sender { font-weight: 700; }
     .chat-message.my-message .message-sender { color: #e0f2fe !important; }
-    [data-theme="retro"] .chat-message.my-message .message-sender { color: var(--bg-color) !important; }
     .message-time { color: var(--status-btn-text); font-size: 0.68rem; }
     .chat-message.my-message .message-time { color: rgba(255, 255, 255, 0.8); }
-    [data-theme="retro"] .chat-message.my-message .message-time { color: var(--bg-color); }
     .message-text { font-size: 0.95rem; line-height: 1.4; color: var(--chat-msg-text); }
     .chat-message.my-message .message-text { color: #ffffff; }
-    [data-theme="retro"] .chat-message.my-message .message-text { color: var(--bg-color); }
 
     .chat-input-area { padding: 10px 14px; background: var(--header-bg); border-top: 1px solid var(--modal-border); display: flex; align-items: center; gap: 10px; }
     .sticker-toggle-btn { background: var(--status-btn-bg); border: 1px solid var(--status-btn-border); font-size: 1.2rem; cursor: pointer; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
     .chat-input { flex: 1; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--input-text); padding: 10px 16px; border-radius: 12px; font-size: 0.95rem; outline: none; }
     .chat-send-btn { width: 42px; height: 40px; background: linear-gradient(135deg, #38bdf8, #0284c7); color: #ffffff; border: none; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-    [data-theme="retro"] .chat-send-btn { background: var(--status-btn-bg); border: 1px solid var(--status-btn-border); color: var(--text-color); }
 
     .sticker-picker { background: var(--modal-bg); border-top: 1px solid var(--modal-border); padding: 12px 14px; display: none; flex-direction: column; gap: 10px; max-height: 260px; overflow-y: auto; }
     .sticker-picker.active { display: flex; }
@@ -752,9 +621,7 @@
     .pending-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(75px, 1fr)); gap: 10px; }
     .pending-badge { background-color: var(--badge-bg); border: 1px solid var(--badge-border); color: #0284c7; font-weight: 700; font-size: 1.05rem; padding: 12px 8px; border-radius: 10px; text-align: center; }
     [data-theme="dark"] .pending-badge { color: #38bdf8; }
-    [data-theme="retro"] .pending-badge { color: var(--text-color); }
     .pending-empty { text-align: center; color: #22c55e; font-weight: 600; padding: 30px 10px; font-size: 1.1rem; }
-    [data-theme="retro"] .pending-empty { color: var(--text-color); }
   </style>
 
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -806,11 +673,6 @@
         </svg>
         <svg id="moonIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
           <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-        </svg>
-        <svg id="retroIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
-          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-          <line x1="8" y1="21" x2="16" y2="21"></line>
-          <line x1="12" y1="17" x2="12" y2="21"></line>
         </svg>
       </button>
 
@@ -921,43 +783,29 @@
     const STORAGE_KEY_THEME = 'app_theme';
     const sunIcon = document.getElementById('sunIcon');
     const moonIcon = document.getElementById('moonIcon');
-    const retroIcon = document.getElementById('retroIcon');
 
     function applyTheme(theme) {
       document.documentElement.setAttribute('data-theme', theme);
       localStorage.setItem(STORAGE_KEY_THEME, theme);
-      
-      sunIcon.style.display = 'none';
-      moonIcon.style.display = 'none';
-      retroIcon.style.display = 'none';
-
       if (theme === 'light') {
+        sunIcon.style.display = 'none';
         moonIcon.style.display = 'block';
-      } else if (theme === 'retro') {
-        retroIcon.style.display = 'block';
       } else {
         sunIcon.style.display = 'block';
+        moonIcon.style.display = 'none';
       }
     }
 
     function toggleTheme() {
       const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-      let nextTheme = 'light';
-      if (currentTheme === 'dark') {
-        nextTheme = 'light';
-      } else if (currentTheme === 'light') {
-        nextTheme = 'retro';
-      } else {
-        nextTheme = 'dark';
-      }
-      applyTheme(nextTheme);
+      applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
     }
 
     applyTheme(localStorage.getItem(STORAGE_KEY_THEME) || 'dark');
 
     const BRANCH_NUMBERS = [51, 37, 57, 7, 124, 148, 88, 127, 119, 68, 163, 76, 95, 98, 96, 122, 50, 53, 17, 110];
     const INITIAL_STATUSES = {"51":false,"37":false,"57":false,"7":false,"124":false,"148":false,"88":false,"127":false,"119":false,"68":false,"163":false,"76":false,"95":false,"98":false,"96":false,"122":false,"50":false,"53":false,"17":false,"110":false};
-    const APP_VERSION = '1.0.3';
+    const APP_VERSION = '1.0.4';
 
     const TELEGRAM_STICKERS = [
       "https://em-content.zobj.net/source/telegram/386/clown-face_1f921.webp",
@@ -1056,6 +904,7 @@
 
     let currentStatuses = { ...INITIAL_STATUSES };
 
+    // Единый слушатель изменений статусов
     branchesRef.on('value', (snapshot) => {
       const val = snapshot.val();
       if (val) {
@@ -1065,6 +914,7 @@
       }
       renderGrid();
       updateCounter();
+      renderPendingGrid(); // Автоматическое обновление списка незакрытых в реальном времени
     });
 
     function renderGrid() {
@@ -1140,7 +990,10 @@
     }
 
     // Незакрытые отделения
-    function openPendingModal() {
+    function renderPendingGrid() {
+      const overlay = document.getElementById('pendingModalOverlay');
+      if (!overlay.classList.contains('active')) return;
+
       const grid = document.getElementById('pendingGrid');
       grid.innerHTML = '';
       const pending = BRANCH_NUMBERS.filter(num => !currentStatuses[num]);
@@ -1155,9 +1008,12 @@
           grid.appendChild(badge);
         });
       }
+    }
 
+    function openPendingModal() {
       document.getElementById('pendingModalOverlay').classList.add('active');
       document.body.classList.add('modal-open');
+      renderPendingGrid();
     }
 
     function closePendingModal() {
@@ -1208,19 +1064,15 @@
       const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
       monthTitle.innerText = `${monthNames[m]} ${y}`;
 
-      // Отписываемся от старого месяца, если был активен
       if (activeCalRef) {
         activeCalRef.off('value');
       }
 
-      // Подписываемся на основной путь графиков
       activeCalRef = db.ref(`schedules/${monthKey}`);
       
-      // Слушаем изменения базы в реальном времени
       activeCalRef.on('value', snapshot => {
         let monthData = snapshot.val() || {};
         
-        // Если в основном узле нет данных, дополнительно проверяем legacy узел `schedule/YYYY-MM`
         if (!snapshot.exists()) {
           db.ref(`schedule/${monthKey}`).once('value', legacySnap => {
             renderCalendarGrid(legacySnap.val() || {});
@@ -1258,7 +1110,6 @@
         const dayCell = document.createElement('div');
         
         const padD = String(d).padStart(2, '0');
-        // Поиск смены: проверка ключей day_X, day_XX, XX или X
         const shiftType = monthData[`day_${d}`] || monthData[`day_${padD}`] || monthData[padD] || monthData[d];
 
         let shiftClass = '';
@@ -1297,7 +1148,6 @@
       const padD = String(selectedCalDay).padStart(2, '0');
       const monthKey = `${y}-${monthStr}`;
 
-      // Каноничные ссылки в обоих поддерживаемых форматах баз
       const refPrimary = db.ref(`schedules/${monthKey}/day_${selectedCalDay}`);
       const refStandard = db.ref(`schedule/${monthKey}/${padD}`);
       const refLegacy = db.ref(`schedule/${monthKey}/${selectedCalDay}`);
@@ -1420,4 +1270,3 @@
   </script>
 </body>
 </html>
-
