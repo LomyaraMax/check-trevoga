@@ -904,6 +904,9 @@
 
     let currentStatuses = { ...INITIAL_STATUSES };
 
+    // Флаг для предотвращения повторных Push-уведомлений
+    let hasSentAllClosedPush = false;
+
     // Единый слушатель изменений статусов
     branchesRef.on('value', (snapshot) => {
       const val = snapshot.val();
@@ -912,10 +915,37 @@
       } else {
         currentStatuses = { ...INITIAL_STATUSES };
       }
+
+      const closedCount = Object.values(currentStatuses).filter(Boolean).length;
+
+      // Проверка на закрытие всех 20 отделений
+      if (closedCount === 20 && !hasSentAllClosedPush) {
+        sendOneSignalPush();
+        hasSentAllClosedPush = true;
+      } else if (closedCount < 20) {
+        hasSentAllClosedPush = false; // Сброс флага, если кто-то опять открыл отделение
+      }
+
       renderGrid();
       updateCounter();
       renderPendingGrid(); // Автоматическое обновление списка незакрытых в реальном времени
     });
+
+    function sendOneSignalPush() {
+      fetch("https://onesignal.com/api/v1/notifications", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json; charset=utf-8",
+          "Authorization": "Basic os_v2_app_c4hbcc3hbjbzzd6dphsxcgtnsoy4y7lcja3uzdet3nid7omiv5rxsceqn34pbpxozdmmat6pn327trlmwre3clrkqrg7pfrunjvitdy"
+        },
+        body: JSON.stringify({
+          app_id: "170e110b-670a-439c-8fc3-79e5711a6d93",
+          included_segments: ["Subscribed Users"],
+          contents: { "ru": "🎉 Все 20 отделений успешно закрыты!" },
+          headings: { "ru": "Отчет КЗ" }
+        })
+      }).catch(err => console.error("Ошибка отправки Push:", err));
+    }
 
     function renderGrid() {
       const grid = document.getElementById('branchesGrid');
@@ -1270,3 +1300,4 @@
   </script>
 </body>
 </html>
+
