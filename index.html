@@ -532,6 +532,14 @@
       padding: 4px;
       cursor: pointer;
       user-select: none;
+      transition: opacity 0.2s ease, filter 0.2s ease;
+    }
+
+    /* Стиль для прошедших дней */
+    .cal-day.past {
+      opacity: 0.4;
+      filter: grayscale(35%);
+      background: rgba(15, 23, 42, 0.3);
     }
 
     .cal-day.empty {
@@ -1163,6 +1171,12 @@
       const firstDayIndex = (new Date(y, m, 1).getDay() + 6) % 7;
       const daysInMonth = new Date(y, m + 1, 0).getDate();
 
+      // Данные сегодняшнего дня для сравнения прошедших дат
+      const today = new Date();
+      const todayYear = today.getFullYear();
+      const todayMonth = today.getMonth();
+      const todayDay = today.getDate();
+
       for (let i = 0; i < firstDayIndex; i++) {
         const empty = document.createElement('div');
         empty.className = 'cal-day empty';
@@ -1181,7 +1195,12 @@
         else if (shiftType === '163') { shiftClass = 'st-163'; badgeText = '163'; }
         else if (shiftType === 'vh') { shiftClass = 'st-vh'; badgeText = 'ВХ'; }
 
-        dayCell.className = `cal-day ${shiftClass}`;
+        // Определение, прошел ли день
+        const cellDate = new Date(y, m, d);
+        const todayDate = new Date(todayYear, todayMonth, todayDay);
+        const isPast = cellDate < todayDate;
+
+        dayCell.className = `cal-day ${shiftClass} ${isPast ? 'past' : ''}`;
         dayCell.onclick = () => openShiftModal(d);
 
         dayCell.innerHTML = `
@@ -1333,3 +1352,4 @@
   </script>
 </body>
 </html>
+
